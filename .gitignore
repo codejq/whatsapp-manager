@@ -1,0 +1,28 @@
+# Build output
+/dist/
+/bin/
+*.exe
+/build/gowa/
+/internal/api/dist/
+
+# Runtime data
+*.db
+*.db-wal
+*.db-shm
+storages/
+statics/
+logs/
+
+# Frontend
+/web/node_modules/
+/web/dist/
+
+# Env / secrets
+.env
+*.pfx
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

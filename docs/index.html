@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="img/app-icon.png">
+<title>WhatsApp Manager</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="WhatsApp Manager — حوّل رسائل واتساب المهمة تلقائياً إلى الأشخاص المناسبين عبر واتساب أو البريد. Free Windows app that forwards WhatsApp messages by rules.">
+<!-- Set to "owner/repo" if the site is served from a custom domain; on *.github.io it is detected automatically. -->
+<meta name="wam-repo" content="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap">
+<style>
+/* Layout: a routing board — messages in, one rule in the middle, deliveries out — then plain sections. */
+:root {
+  --bg: #f2f6f3;
+  --surface: #ffffff;
+  --ink: #10241d;
+  --muted: #586c64;
+  --line: #d3e1d8;
+  --brand: #12804b;
+  --brand-ink: #0b5c36;
+  --on-brand: #ffffff;
+  --hl: #ffd769;
+  --hl-ink: #3d2c00;
+  --dim: #9aaba3;
+  --font-display: "Readex Pro", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  --font-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1612; --surface: #12211b; --ink: #e5efe9; --muted: #95aaa1; --line: #24392f;
+    --brand: #39c47e; --brand-ink: #7fdcab; --on-brand: #06180f; --hl: #7a5d10; --hl-ink: #fff1c7; --dim: #5d7168;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1612; --surface: #12211b; --ink: #e5efe9; --muted: #95aaa1; --line: #24392f;
+  --brand: #39c47e; --brand-ink: #7fdcab; --on-brand: #06180f; --hl: #7a5d10; --hl-ink: #fff1c7; --dim: #5d7168;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+:root[lang="en"] body { font-family: var(--font-body); }
+a { color: var(--brand-ink); }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; border-radius: 6px; }
+img { max-width: 100%; display: block; }
+.wrap { max-width: 1120px; margin-inline: auto; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.25; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.1rem); }
+h3 { font-size: 1.1rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
+
+/* language switching: elements marked data-l show only in their language */
+:root:not([lang="en"]) [data-l="en"], :root[lang="en"] [data-l="ar"] { display: none !important; }
+
+/* header */
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.top .wrap { display: flex; align-items: center; gap: 16px; padding-block: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; white-space: nowrap; }
+.brand img { width: 34px; height: 34px; border-radius: 9px; }
+.top nav { display: flex; gap: 18px; margin-inline-start: auto; align-items: center; }
+.top nav a.link { color: var(--muted); text-decoration: none; font-size: .95rem; }
+.top nav a.link:hover { color: var(--ink); }
+.lang { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 4px 12px; font: 600 .9rem var(--font-body); cursor: pointer; }
+@media (max-width: 720px) { .top nav a.link { display: none; } .top nav { gap: 10px; } }
+@media (max-width: 460px) { .brand-name { display: none; } }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; padding: 12px 20px; font: 600 1rem var(--font-body); text-decoration: none; border: 1px solid transparent; cursor: pointer; }
+.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-ghost { border-color: var(--line); color: var(--ink); background: var(--surface); }
+.btn-sm { padding: 7px 14px; font-size: .9rem; border-radius: 10px; }
+
+/* hero */
+.hero { padding-block: clamp(36px, 6vw, 72px) 24px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+.hero h1 { font-size: clamp(2rem, 1.3rem + 3vw, 3.4rem); font-weight: 700; letter-spacing: -.01em; max-width: 22ch; }
+:root[lang="en"] .hero h1 { letter-spacing: -.02em; }
+.hero .lead { font-size: clamp(1.05rem, 1rem + .3vw, 1.25rem); color: var(--muted); max-width: 60ch; margin-top: 14px; }
+.hero .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 26px; }
+.hero .facts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; font-size: .9rem; color: var(--muted); }
+.hero .facts span::before { content: "✓"; color: var(--brand); margin-inline-end: 6px; font-weight: 700; }
+
+/* routing board */
+.board { display: grid; grid-template-columns: 1.25fr auto 1fr auto 1fr; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; }
+.col { display: grid; gap: 10px; min-width: 0; }
+.col-label { font: 500 .72rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+:root[lang="ar"] .col-label { font-family: var(--font-body); letter-spacing: 0; text-transform: none; font-size: .8rem; }
+.msg { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; background: var(--bg); min-width: 0; }
+.msg .who { font-size: .8rem; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; }
+.msg .who b { color: var(--ink); font-weight: 600; }
+.msg .txt { font-size: .95rem; margin-top: 2px; overflow-wrap: anywhere; }
+.msg.skip { opacity: .55; }
+.msg.skip .tag { color: var(--dim); }
+.tag { font: 500 .72rem var(--font-mono); color: var(--brand-ink); margin-top: 6px; display: block; }
+:root[lang="ar"] .tag { font-family: var(--font-body); }
+mark {
+  color: var(--hl-ink); padding: 0 3px; border-radius: 3px;
+  background: linear-gradient(var(--hl), var(--hl)) no-repeat;
+  background-size: 100% 100%;
+  animation: sweep 900ms ease-out both;
+}
+:root[dir="rtl"] mark { background-position: right; }
+.msg:nth-child(3) mark { animation-delay: 300ms; }
+@keyframes sweep { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+@media (prefers-reduced-motion: reduce) { mark { animation: none; } }
+.arrow { color: var(--brand); font-size: 1.4rem; text-align: center; }
+:root[dir="rtl"] .arrow { transform: scaleX(-1); }
+.rule { border: 2px solid var(--brand); border-radius: 16px; padding: 14px; background: var(--surface); }
+.rule h3 { font-size: .95rem; color: var(--brand-ink); }
+.rule ol { margin: 8px 0 0; padding-inline-start: 1.2em; font-size: .9rem; display: grid; gap: 4px; }
+.out { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.out .kind { font-size: .78rem; color: var(--muted); }
+.out .dest { font-weight: 600; overflow-wrap: anywhere; }
+.out .sub { font: 400 .78rem var(--font-mono); color: var(--muted); overflow-wrap: anywhere; direction: ltr; unicode-bidi: isolate; text-align: start; }
+@media (max-width: 900px) {
+  .board { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  .arrow { transform: rotate(90deg); }
+  :root[dir="rtl"] .arrow { transform: rotate(90deg); }
+}
+
+/* sections */
+section.block { padding-block: clamp(40px, 6vw, 72px); border-top: 1px solid var(--line); }
+.head { display: grid; gap: 8px; margin-bottom: 28px; max-width: 70ch; }
+.eyebrow { font: 500 .78rem var(--font-mono); color: var(--brand-ink); letter-spacing: .08em; text-transform: uppercase; }
+:root[lang="ar"] .eyebrow { font-family: var(--font-body); letter-spacing: 0; text-transform: none; font-size: .9rem; }
+
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: s; list-style: none; padding: 0; margin: 0; }
+.steps li { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: grid; gap: 6px; align-content: start; }
+.steps li::before { counter-increment: s; content: counter(s); font: 700 1.6rem var(--font-display); color: var(--brand); }
+@media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+
+.rules-table { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.rules-table table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.rules-table th, .rules-table td { padding: 12px 16px; text-align: start; border-bottom: 1px solid var(--line); vertical-align: top; }
+.rules-table tr:last-child td { border-bottom: 0; }
+.rules-table th { font-size: .85rem; color: var(--muted); font-weight: 600; background: var(--bg); }
+
+/* gallery */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tab { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 6px 14px; font: 500 .92rem var(--font-body); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.shot { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); box-shadow: 0 18px 40px -24px rgb(0 0 0 / .35); }
+.shot img { width: 100%; height: auto; }
+.caption { margin-top: 12px; color: var(--muted); font-size: .95rem; }
+
+.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 32px; }
+.features div { display: grid; gap: 6px; align-content: start; }
+.features h3 { display: flex; gap: 10px; align-items: center; }
+.features h3 span { width: 10px; height: 10px; border-radius: 3px; background: var(--brand); flex: none; }
+.features p { color: var(--muted); font-size: .95rem; }
+@media (max-width: 900px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
+
+.install { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.install ol { margin: 0; padding-inline-start: 1.3em; display: grid; gap: 10px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; font-size: .95rem; display: grid; gap: 8px; }
+@media (max-width: 800px) { .install { grid-template-columns: 1fr; } }
+
+details { border-bottom: 1px solid var(--line); padding-block: 14px; }
+details summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+details summary::after { content: "+"; color: var(--brand); font-weight: 700; }
+details[open] summary::after { content: "−"; }
+details p { margin-top: 8px; color: var(--muted); max-width: 70ch; }
+
+footer { border-top: 1px solid var(--line); padding-block: 36px 48px; display: grid; gap: 18px; font-size: .92rem; color: var(--muted); }
+footer .row { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; }
+footer .pub { color: var(--ink); }
+footer .pub b { font-family: var(--font-display); }
+.copy { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 8px; padding: 1px 8px; font: 500 .78rem var(--font-body); cursor: pointer; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="img/app-icon.png" alt="WhatsApp Manager"><span class="brand-name">WhatsApp Manager</span></a>
+    <nav>
+      <a class="link" href="#how"><span data-l="ar">كيف يعمل</span><span data-l="en">How it works</span></a>
+      <a class="link" href="#screens"><span data-l="ar">لقطات</span><span data-l="en">Screenshots</span></a>
+      <a class="link" href="#faq"><span data-l="ar">أسئلة</span><span data-l="en">FAQ</span></a>
+      <button class="lang" id="lang-toggle" type="button" aria-label="Switch language / تغيير اللغة"><span data-l="ar">English</span><span data-l="en">العربية</span></button>
+      <a class="btn btn-primary btn-sm js-download" href="#install"><span data-l="ar">تنزيل</span><span data-l="en">Download</span></a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+  <section class="hero">
+    <div>
+      <h1>
+        <span data-l="ar">رسائل واتساب المهمة تصل إلى الشخص الصحيح، تلقائياً.</span>
+        <span data-l="en">The WhatsApp messages that matter, delivered to the right person automatically.</span>
+      </h1>
+      <p class="lead">
+        <span data-l="ar">تطبيق مجاني لويندوز يراقب مجموعاتك ومحادثاتك، ويحوّل الرسائل التي تطابق قواعدك — رابط درس، طلب عاجل، رسالة من شخص معيّن — إلى بريد إلكتروني أو رقم أو مجموعة واتساب.</span>
+        <span data-l="en">A free Windows app that watches your groups and chats and forwards the messages that match your rules — a lesson link, an urgent request, anything from one person — to an email address, a WhatsApp number or a group.</span>
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary js-download" href="#install"><span data-l="ar">تنزيل لويندوز</span><span data-l="en">Download for Windows</span></a>
+        <a class="btn btn-ghost" href="#how"><span data-l="ar">شاهد كيف يعمل</span><span data-l="en">See how it works</span></a>
+      </div>
+      <div class="facts">
+        <span data-l="ar">مجاني ومفتوح المصدر</span><span data-l="en">Free and open source</span>
+        <span data-l="ar">ويندوز 10 و11</span><span data-l="en">Windows 10 and 11</span>
+        <span data-l="ar">عربي وإنجليزي</span><span data-l="en">Arabic and English</span>
+        <span data-l="ar">بياناتك تبقى على جهازك</span><span data-l="en">Your data stays on your PC</span>
+      </div>
+    </div>
+
+    <div class="board" aria-label="Example: messages matched by a rule and forwarded">
+      <div class="col">
+        <div class="col-label"><span data-l="ar">رسائل واردة</span><span data-l="en">Incoming</span></div>
+        <div class="msg">
+          <div class="who"><b><span data-l="ar">دروس الصف الخامس</span><span data-l="en">Grade 5 Lessons</span></b><span>· <span data-l="ar">أ. منى</span><span data-l="en">Ms. Mona</span></span></div>
+          <div class="txt"><span data-l="ar">رابط حصة العربي الساعة 7:00 </span><span data-l="en">Arabic class at 7:00, link: </span><mark class="mono">zoom.us/j/7123456789</mark></div>
+          <span class="tag"><span data-l="ar">✓ فيها رابط</span><span data-l="en">✓ contains a link</span></span>
+        </div>
+        <div class="msg">
+          <div class="who"><b><span data-l="ar">فريق المبيعات</span><span data-l="en">Sales Team</span></b><span>· <span data-l="ar">سارة</span><span data-l="en">Sara</span></span></div>
+          <div class="txt"><span data-l="ar">طلب <mark>عَاجِل</mark> من العميل، يرجى الرد اليوم</span><span data-l="en"><mark>Urgent</mark> request from the client, please reply today</span></div>
+          <span class="tag"><span data-l="ar">✓ «عاجل» مع التشكيل</span><span data-l="en">✓ keyword “urgent”</span></span>
+        </div>
+        <div class="msg skip">
+          <div class="who"><b><span data-l="ar">أحمد علي</span><span data-l="en">Ahmed Ali</span></b></div>
+          <div class="txt"><span data-l="ar">هل وصلك الملف؟</span><span data-l="en">Did you get the file?</span></div>
+          <span class="tag"><span data-l="ar">— لا تطابق أي قاعدة</span><span data-l="en">— matches no rule</span></span>
+        </div>
+      </div>
+
+      <div class="arrow" aria-hidden="true">➜</div>
+
+      <div class="col">
+        <div class="col-label"><span data-l="ar">قواعدك</span><span data-l="en">Your rules</span></div>
+        <div class="rule">
+          <h3><span data-l="ar">روابط الدروس لولي الأمر</span><span data-l="en">Lesson links to parent</span></h3>
+          <ol>
+            <li><span data-l="ar">من مجموعة الصف الخامس</span><span data-l="en">From the Grade 5 group</span></li>
+            <li><span data-l="ar">إذا فيها رابط</span><span data-l="en">If it contains a link</span></li>
+            <li><span data-l="ar">أرسلها بالبريد</span><span data-l="en">Email it</span></li>
+          </ol>
+        </div>
+        <div class="rule">
+          <h3><span data-l="ar">العاجل إلى المدراء</span><span data-l="en">Urgent to managers</span></h3>
+          <ol>
+            <li><span data-l="ar">من أي محادثة</span><span data-l="en">From any chat</span></li>
+            <li><span data-l="ar">إذا فيها «عاجل» أو urgent</span><span data-l="en">If it says “urgent” or «عاجل»</span></li>
+            <li><span data-l="ar">أرسل نسخة عبر واتساب</span><span data-l="en">Send a WhatsApp copy</span></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="arrow" aria-hidden="true">➜</div>
+
+      <div class="col">
+        <div class="col-label"><span data-l="ar">تم الإرسال</span><span data-l="en">Delivered</span></div>
+        <div class="out">
+          <span class="kind"><span data-l="ar">بريد إلكتروني</span><span data-l="en">Email</span></span>
+          <span class="dest mono">parent@example.com</span>
+          <span class="sub">[WhatsApp #42] Grade 5 Lessons — Ms. Mona</span>
+        </div>
+        <div class="out">
+          <span class="kind"><span data-l="ar">مجموعة واتساب</span><span data-l="en">WhatsApp group</span></span>
+          <span class="dest"><span data-l="ar">المدراء</span><span data-l="en">Managers</span></span>
+          <span class="sub"><span data-l="ar">من سارة في فريق المبيعات</span><span data-l="en">From Sara in Sales Team</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="how">
+    <div class="head">
+      <span class="eyebrow"><span data-l="ar">كيف يعمل</span><span data-l="en">How it works</span></span>
+      <h2><span data-l="ar">ثلاث خطوات، بدون أي إعدادات تقنية</span><span data-l="en">Three steps, nothing technical</span></h2>
+    </div>
+    <ol class="steps">
+      <li>
+        <h3><span data-l="ar">ثبّت التطبيق</span><span data-l="en">Install</span></h3>
+        <p class="muted"><span data-l="ar">ملف تثبيت واحد بدون صلاحيات مدير. يبدأ مع ويندوز ويعمل بهدوء في شريط المهام.</span><span data-l="en">One installer, no administrator rights. It starts with Windows and runs quietly in the system tray.</span></p>
+      </li>
+      <li>
+        <h3><span data-l="ar">اربط واتساب</span><span data-l="en">Link WhatsApp</span></h3>
+        <p class="muted"><span data-l="ar">من هاتفك: الإعدادات ← الأجهزة المرتبطة ← ربط جهاز، ثم امسح رمز QR. أو استخدم رمز رقم الهاتف.</span><span data-l="en">On your phone: Settings → Linked devices → Link a device, then scan the QR code. Or use a phone-number code.</span></p>
+      </li>
+      <li>
+        <h3><span data-l="ar">أنشئ قاعدة</span><span data-l="en">Create a rule</span></h3>
+        <p class="muted"><span data-l="ar">من أين ← أي رسائل ← إلى أين. ابدأ من قالب جاهز وجرّب رسالة قبل الحفظ.</span><span data-l="en">Where from → which messages → send to. Start from a template and try a sample message before saving.</span></p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="block" id="examples">
+    <div class="head">
+      <span class="eyebrow"><span data-l="ar">أمثلة على القواعد</span><span data-l="en">Rule examples</span></span>
+      <h2><span data-l="ar">كل قاعدة جملة واحدة تقرؤها بسهولة</span><span data-l="en">Every rule reads as one sentence</span></h2>
+    </div>
+    <div class="rules-table">
+      <table>
+        <thead><tr>
+          <th><span data-l="ar">عندما تصل رسالة…</span><span data-l="en">When a message…</span></th>
+          <th><span data-l="ar">و…</span><span data-l="en">…and</span></th>
+          <th><span data-l="ar">إذن</span><span data-l="en">Then</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span data-l="ar">في مجموعة «فريق المبيعات»</span><span data-l="en">arrives in the “Sales Team” group</span></td><td><span data-l="ar">فيها رابط</span><span data-l="en">contains a link</span></td><td><span data-l="ar">أرسلها بالبريد إلى</span><span data-l="en">email it to</span> <span class="mono">sales@company.com</span></td></tr>
+          <tr><td><span data-l="ar">في مجموعة الدروس</span><span data-l="en">arrives in a lessons group</span></td><td><span data-l="ar">فيها رابط زووم أو ميت أو أي رابط</span><span data-l="en">has a Zoom, Meet or any link</span></td><td><span data-l="ar">بريد لولي الأمر ونسخة عبر واتساب</span><span data-l="en">email the parent and send a WhatsApp copy</span></td></tr>
+          <tr><td><span data-l="ar">في أي محادثة</span><span data-l="en">arrives in any chat</span></td><td><span data-l="ar">فيها «عاجل» أو urgent</span><span data-l="en">says “urgent” or «عاجل»</span></td><td><span data-l="ar">أرسلها إلى مجموعة «المدراء»</span><span data-l="en">send it to the “Managers” group</span></td></tr>
+          <tr><td><span data-l="ar">من أحمد</span><span data-l="en">comes from Ahmed</span></td><td>—</td><td><span data-l="ar">حوّلها عبر واتساب إلى سارة</span><span data-l="en">forward it on WhatsApp to Sara</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="block" id="screens">
+    <div class="head">
+      <span class="eyebrow"><span data-l="ar">لقطات الشاشة</span><span data-l="en">Screenshots</span></span>
+      <h2><span data-l="ar">واجهة عربية واضحة، والإنجليزية بنقرة</span><span data-l="en">A clear interface in Arabic or English</span></h2>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" type="button" id="tab-dashboard" data-shot="dashboard" aria-selected="true"><span data-l="ar">الرئيسية</span><span data-l="en">Home</span></button>
+      <button class="tab" role="tab" type="button" id="tab-rules" data-shot="rules" aria-selected="false"><span data-l="ar">القواعد</span><span data-l="en">Rules</span></button>
+      <button class="tab" role="tab" type="button" id="tab-activity" data-shot="activity" aria-selected="false"><span data-l="ar">السجل</span><span data-l="en">Activity</span></button>
+      <button class="tab" role="tab" type="button" id="tab-link" data-shot="link-whatsapp" aria-selected="false"><span data-l="ar">ربط واتساب</span><span data-l="en">Link WhatsApp</span></button>
+      <button class="tab" role="tab" type="button" id="tab-editor" data-shot="rule-editor" data-only="ar" aria-selected="false"><span data-l="ar">معالج القواعد</span><span data-l="en">Rule wizard</span></button>
+      <button class="tab" role="tab" type="button" id="tab-email" data-shot="email-settings" data-only="ar" aria-selected="false"><span data-l="ar">البريد</span><span data-l="en">Email</span></button>
+    </div>
+    <figure class="shot" style="margin:0">
+      <img id="shot-img" src="screenshots/dashboard-ar.png" width="1920" height="1200" alt="WhatsApp Manager screenshot" loading="lazy">
+    </figure>
+    <p class="caption" id="shot-caption"></p>
+  </section>
+
+  <section class="block" id="features">
+    <div class="head">
+      <span class="eyebrow"><span data-l="ar">المزايا</span><span data-l="en">Features</span></span>
+      <h2><span data-l="ar">مصمم ليعمل بدون متابعة</span><span data-l="en">Built to run unattended</span></h2>
+    </div>
+    <div class="features">
+      <div><h3><span></span><b data-l="ar">لا تكرار ولا حلقات</b><b data-l="en">No duplicates, no loops</b></h3><p><span data-l="ar">لا تصل الرسالة نفسها مرتين لنفس الوجهة حتى لو طابقتها عدة قواعد، ولا يعيد التطبيق تحويل ما أرسله بنفسه.</span><span data-l="en">A message never reaches the same destination twice, even when several rules match, and the app never re-forwards its own messages.</span></p></div>
+      <div><h3><span></span><b data-l="ar">يفهم العربية</b><b data-l="en">Understands Arabic</b></h3><p><span data-l="ar">«عاجل» تطابق «عَاجِل» و«عـــاجل»، و«احمد» تطابق «أحمد». الهمزات والتشكيل والتطويل تُعالج تلقائياً.</span><span data-l="en">Keywords ignore diacritics, tatweel and letter variants such as أ/ا and ة/ه, so Arabic messages match the way people write them.</span></p></div>
+      <div><h3><span></span><b data-l="ar">أي رابط</b><b data-l="en">Any link</b></h3><p><span data-l="ar">زووم وميت وتيمز ونماذج جوجل وأي موقع، حتى لو كان الرابط ملتصقاً بالنص بدون مسافة.</span><span data-l="en">Zoom, Meet, Teams, Google Forms or any site, even when the link is glued to the text with no space.</span></p></div>
+      <div><h3><span></span><b data-l="ar">بريدك الخاص</b><b data-l="en">Your own email</b></h3><p><span data-l="ar">Gmail وOutlook وMicrosoft 365 وأي خادم SMTP، مع إعداد سريع ورسالة تجريبية، ورقم متسلسل في العنوان حتى لا يجمعها Gmail.</span><span data-l="en">Gmail, Outlook, Microsoft 365 or any SMTP server, with quick setup, a test email, and numbered subjects so Gmail never merges them.</span></p></div>
+      <div><h3><span></span><b data-l="ar">يتعافى وحده</b><b data-l="en">Recovers by itself</b></h3><p><span data-l="ar">يعيد الاتصال بعد انقطاع الإنترنت أو السكون، وتنتظر الرسائل حتى يعود واتساب أو البريد ثم تُرسل.</span><span data-l="en">Reconnects after network loss or sleep; messages wait while WhatsApp or email is down and go out when it is back.</span></p></div>
+      <div><h3><span></span><b data-l="ar">خصوصية كاملة</b><b data-l="en">Private by design</b></h3><p><span data-l="ar">كل شيء على جهازك: لا حسابات ولا سحابة ولا تتبع، وكلمات المرور مشفرة بحماية ويندوز. تُحذف الرسائل القديمة بعد 5 أيام.</span><span data-l="en">Everything stays on your PC: no accounts, cloud or tracking, passwords encrypted by Windows. Old messages are deleted after 5 days.</span></p></div>
+    </div>
+  </section>
+
+  <section class="block" id="install">
+    <div class="head">
+      <span class="eyebrow"><span data-l="ar">التثبيت</span><span data-l="en">Install</span></span>
+      <h2><span data-l="ar">جاهز في دقيقتين</span><span data-l="en">Ready in two minutes</span></h2>
+    </div>
+    <div class="install">
+      <ol>
+        <li><span data-l="ar">نزّل </span><span data-l="en">Download </span><span class="mono">WhatsAppManager-Setup.exe</span><span data-l="ar"> من صفحة الإصدارات.</span><span data-l="en"> from the releases page.</span></li>
+        <li><span data-l="ar">شغّله. إذا ظهرت رسالة «حمى Windows جهازك» اضغط «مزيد من المعلومات» ثم «تشغيل على أي حال».</span><span data-l="en">Run it. If Windows says “Windows protected your PC”, click “More info”, then “Run anyway”.</span></li>
+        <li><span data-l="ar">اتبع المعالج: اللغة، ربط واتساب، البريد (اختياري)، ثم أول قاعدة.</span><span data-l="en">Follow the wizard: language, link WhatsApp, email (optional), then your first rule.</span></li>
+      </ol>
+      <div class="note">
+        <a class="btn btn-primary js-download" href="#install" style="justify-self:start"><span data-l="ar">صفحة التنزيل</span><span data-l="en">Go to downloads</span></a>
+        <p class="muted"><span data-l="ar">يتطلب ويندوز 10 (1809 أو أحدث) أو ويندوز 11، 64-بت.</span><span data-l="en">Requires Windows 10 (1809 or later) or Windows 11, 64-bit.</span></p>
+        <p class="muted"><span data-l="ar">نصيحة: استخدم رقم واتساب مخصصاً للأتمتة؛ قد يقيّد واتساب الأرقام التي ترسل رسائل آلية كثيرة.</span><span data-l="en">Tip: use a dedicated WhatsApp number for automation; WhatsApp may restrict numbers that send many automated messages.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="faq">
+    <div class="head">
+      <span class="eyebrow"><span data-l="ar">أسئلة شائعة</span><span data-l="en">FAQ</span></span>
+      <h2><span data-l="ar">قبل أن تبدأ</span><span data-l="en">Before you start</span></h2>
+    </div>
+    <details>
+      <summary><span data-l="ar">هل يجب إبقاء النافذة مفتوحة؟</span><span data-l="en">Do I need to keep the window open?</span></summary>
+      <p><span data-l="ar">لا. يعمل التطبيق في شريط المهام بجانب الساعة ويبدأ مع ويندوز. للإيقاف اختر «خروج» من قائمة الأيقونة.</span><span data-l="en">No. It keeps working in the system tray next to the clock and starts with Windows. Use Quit in the tray menu to stop it.</span></p>
+    </details>
+    <details>
+      <summary><span data-l="ar">رسالة لم تُحوّل، كيف أعرف السبب؟</span><span data-l="en">A message was not forwarded. Why?</span></summary>
+      <p><span data-l="ar">افتح «السجل»: بجانب كل رسالة سبب تحويلها أو عدم تحويلها، مثل «ليست من محادثة مراقبة» أو «وصلت قبل إنشاء القاعدة».</span><span data-l="en">Open Activity: every message shows why it was or was not forwarded, such as “Not from a watched chat” or “Arrived before the rule existed”.</span></p>
+    </details>
+    <details>
+      <summary><span data-l="ar">البريد يرفض كلمة المرور</span><span data-l="en">My email password is rejected</span></summary>
+      <p><span data-l="ar">Gmail وOutlook وYahoo وiCloud تتطلب «كلمة مرور تطبيق» وليس كلمة مرورك العادية. الرسائل تبقى محفوظة وتُرسل تلقائياً بعد نجاح التجربة.</span><span data-l="en">Gmail, Outlook, Yahoo and iCloud need an app password, not your normal one. Messages are kept and sent automatically once a test email works.</span></p>
+    </details>
+    <details>
+      <summary><span data-l="ar">هل يتبع التطبيق لواتساب؟</span><span data-l="en">Is this an official WhatsApp app?</span></summary>
+      <p><span data-l="ar">لا. هو مشروع مستقل مفتوح المصدر بترخيص MIT، ولا يتبع لواتساب أو ميتا.</span><span data-l="en">No. It is an independent open-source project under the MIT licence, not affiliated with WhatsApp or Meta.</span></p>
+    </details>
+  </section>
+
+  <footer>
+    <div class="row pub">
+      <span><span data-l="ar">بدعم من</span><span data-l="en">Powered by</span> <b>Quantum Billing LLC</b></span>
+      <a href="https://quantum-billing.com/" target="_blank" rel="noopener">quantum-billing.com</a>
+      <span class="mono">+1 361-405-5427</span>
+      <span><span class="mono" id="pub-email">info@Quantum-Billing.com</span> <button class="copy" type="button" id="copy-email"><span data-l="ar">نسخ</span><span data-l="en">Copy</span></button></span>
+    </div>
+    <div class="row">
+      <a class="js-gh" data-path="" href="#"><span data-l="ar">الكود على GitHub</span><span data-l="en">Source on GitHub</span></a>
+      <a class="js-doc" data-doc="user-guide.ar" href="user-guide.ar.html" data-l="ar">دليل الاستخدام</a>
+      <a class="js-doc" data-doc="user-guide.en" href="user-guide.en.html" data-l="en">User guide</a>
+      <a class="js-doc" data-doc="privacy" href="privacy.html"><span data-l="ar">سياسة الخصوصية</span><span data-l="en">Privacy policy</span></a>
+      <span><span data-l="ar">ترخيص MIT · لا يتبع لواتساب أو ميتا</span><span data-l="en">MIT licence · Not affiliated with WhatsApp or Meta</span></span>
+    </div>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var captions = {
+    dashboard: { ar: 'الرئيسية: حالة الاتصال والبريد وإحصاءات اليوم وآخر الرسائل.', en: 'Home: connection, email status, today’s counts and the latest messages.' },
+    rules: { ar: 'القواعد: كل قاعدة بجملة واضحة مع زر تشغيل وإيقاف.', en: 'Rules: each rule as a plain sentence with an on/off switch.' },
+    activity: { ar: 'السجل: كل رسالة، والقاعدة التي طابقتها، وإلى أين أُرسلت.', en: 'Activity: every message, the rule it matched, and where it went.' },
+    'link-whatsapp': { ar: 'ربط واتساب: امسح رمز QR من هاتفك أو استخدم رمز رقم الهاتف.', en: 'Link WhatsApp: scan the QR code with your phone or use a phone-number code.' },
+    'rule-editor': { ar: 'معالج القواعد: من أين ← أي رسائل ← إلى أين ← الاسم والحفظ.', en: 'Rule wizard: where from → which messages → send to → name and save (Arabic interface).' },
+    'email-settings': { ar: 'البريد: إعداد سريع، مزودون جاهزون، ورسالة تجريبية.', en: 'Email: quick setup, provider presets and a test email (Arabic interface).' }
+  };
+  var current = 'dashboard';
+
+  function lang() { return root.getAttribute('lang') === 'en' ? 'en' : 'ar'; }
+  function showShot(name) {
+    current = name;
+    var tab = document.querySelector('.tab[data-shot="' + name + '"]');
+    var l = tab && tab.getAttribute('data-only') ? tab.getAttribute('data-only') : lang();
+    var img = document.getElementById('shot-img');
+    img.src = 'screenshots/' + name + '-' + l + '.png';
+    img.alt = captions[name][lang()];
+    document.getElementById('shot-caption').textContent = captions[name][lang()];
+    document.querySelectorAll('.tab').forEach(function (t) { t.setAttribute('aria-selected', String(t === tab)); });
+  }
+  function setLang(l) {
+    root.setAttribute('lang', l);
+    root.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
+    try { localStorage.setItem('wam-lang', l); } catch (e) { /* storage unavailable */ }
+    showShot(current);
+  }
+
+  var saved = null;
+  try { saved = localStorage.getItem('wam-lang'); } catch (e) { saved = null; }
+  setLang(saved === 'en' ? 'en' : 'ar');
+  document.getElementById('lang-toggle').addEventListener('click', function () { setLang(lang() === 'ar' ? 'en' : 'ar'); });
+  document.querySelectorAll('.tab').forEach(function (t) { t.addEventListener('click', function () { showShot(t.getAttribute('data-shot')); }); });
+
+  // Repository links: from <meta name="wam-repo">, or detected on owner.github.io/repo.
+  var repo = (document.querySelector('meta[name="wam-repo"]') || {}).content || '';
+  var m = /^([a-z0-9-]+)\.github\.io$/i.exec(location.hostname);
+  if (!repo && m) {
+    var seg = location.pathname.split('/').filter(Boolean)[0];
+    repo = m[1] + '/' + (seg || (m[1] + '.github.io'));
+  }
+  if (repo) {
+    var gh = 'https://github.com/' + repo;
+    document.querySelectorAll('.js-download').forEach(function (a) { a.href = gh + '/releases/latest'; a.target = '_blank'; a.rel = 'noopener'; });
+    document.querySelectorAll('.js-gh').forEach(function (a) { a.href = gh; a.target = '_blank'; a.rel = 'noopener'; });
+  } else {
+    document.querySelectorAll('.js-gh').forEach(function (a) { a.hidden = true; });
+    if (!/^https?:$/.test(location.protocol) || !/github\.io$/.test(location.hostname)) {
+      // Preview outside GitHub Pages: the docs pages are not available here.
+      document.querySelectorAll('.js-doc').forEach(function (a) { a.hidden = true; });
+    }
+  }
+
+  document.getElementById('copy-email').addEventListener('click', function () {
+    var text = document.getElementById('pub-email').textContent;
+    var done = function () { var b = document.getElementById('copy-email'); b.dataset.copied = '1'; b.textContent = lang() === 'ar' ? 'تم النسخ' : 'Copied'; };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById('pub-email'));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+  });
+})();
+</script>
+</body>
+</html>

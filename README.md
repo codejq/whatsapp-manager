@@ -6,7 +6,8 @@
     <a href="../../releases/latest"><b>⬇ Download for Windows</b></a> ·
     <a href="README.ar.md">العربية</a> ·
     <a href="docs/user-guide.en.md">User guide</a> ·
-    <a href="docs/privacy.md">Privacy</a>
+    <a href="docs/privacy.md">Privacy</a> ·
+    <a href="docs/index.html">Website</a>
   </p>
   <img src="docs/screenshots/dashboard-en.png" width="860" alt="WhatsApp Manager home screen">
 </div>

@@ -1,0 +1,8 @@
+# GitHub Pages (built by .github/workflows/pages.yml).
+# index.html is a hand-written static page; the Markdown docs (user guides,
+# privacy policy, releasing notes) are rendered with the Primer theme.
+title: WhatsApp Manager
+description: Forward the WhatsApp messages that matter, automatically.
+theme: jekyll-theme-primer
+exclude:
+  - screenshots/README.md

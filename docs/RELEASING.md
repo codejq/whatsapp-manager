@@ -16,12 +16,17 @@
      *Dependabot alerts*. `.github/dependabot.yml` opens weekly update PRs.
    - **Settings → Actions → General → Workflow permissions**: leave the default (read). The release
      workflow asks for `contents: write` itself.
-5. Publish the first release: `git tag v0.1.0`, then `git push origin v0.1.0`.
+5. Turn on the website: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The
+   **Website** workflow then publishes `docs/` to `https://<owner>.github.io/<repo>/` on every change
+   under `docs/`. The landing page finds its own Download and GitHub links. The privacy policy is at
+   `https://<owner>.github.io/<repo>/privacy.html`; use that URL in the Microsoft Store listing.
+6. Publish the first release: `git tag v0.1.0`, then `git push origin v0.1.0`.
 
 | Workflow | Runs when | Does |
 |---|---|---|
 | `ci.yml` | push to `main`, pull requests, manual | lint, tests, builds the exe, zip and installer (artifact) |
 | `release.yml` | tag `vX.Y.Z` | builds, signs if SignPath is configured, publishes a GitHub Release |
+| `pages.yml` | changes under `docs/` on `main`, manual | publishes the website (`docs/index.html` and the Markdown docs) to GitHub Pages |
 | `store.yml` | after a stable release, or manual | builds the MSIX and submits it to the Microsoft Store (only when the `STORE_ENABLED` variable is `true`) |
 
 ## GitHub release (every version)

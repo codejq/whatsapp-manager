@@ -2,7 +2,8 @@ name: Website
 
 # Publishes docs/ to GitHub Pages: docs/index.html is the landing page and
 # the Markdown files (user guides, privacy policy) are rendered by Jekyll.
-# One-time setup: Settings -> Pages -> Source: "GitHub Actions".
+# One-time setup: Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+# Until that is done this workflow skips (with a notice) instead of failing.
 on:
   push:
     branches: [main]
@@ -19,7 +20,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.pages.outputs.enabled }}
+    steps:
+      - name: Is GitHub Pages enabled with "GitHub Actions" as the source?
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if build_type=$(gh api "repos/$REPO/pages" --jq '.build_type' 2>/dev/null) && [ "$build_type" = "workflow" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Website not published::Turn on GitHub Pages: Settings > Pages > Build and deployment > Source: GitHub Actions, then re-run this workflow."
+          fi
+
   build:
+    needs: check
+    if: needs.check.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

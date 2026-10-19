@@ -38,8 +38,21 @@ func TestContainsLink(t *testing.T) {
 		"الرابط(https://zoom.us/j/1)",
 		"linkwww.zoom.us/j/9",
 		"ادخل على zoom.us/j/123456 الآن",
+		"سجل هنا mysite.academy/course",
+		"t.me/channel",
+		"forms.gle/AbC123",
+		"bit.ly/3xyz",
+		"wa.me/966500000000",
+		"teams.microsoft.com/l/meetup-join/123",
+		"ftp://files.example.org/a.zip",
+		"HTTPS://EXAMPLE.COM",
+		"موقعنا: example.store",
 	}
-	no := []string{"hello world", "price is 3.50", "file.pdf attached", "مرحبا"}
+	no := []string{
+		"hello world", "price is 3.50", "file.pdf attached", "مرحبا",
+		"راسلني على name@example.com", "see report.docx and photo.jpg",
+		"e.g. this", "version 1.2.3", "الساعة 7.30",
+	}
 	for _, s := range yes {
 		if !ContainsLink(s) {
 			t.Errorf("expected link in %q", s)

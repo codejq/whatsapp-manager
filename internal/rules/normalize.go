@@ -101,15 +101,53 @@ func lastRune(s string) rune {
 
 func isWordRune(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' }
 
-// Common TLDs used for bare-domain link detection (e.g. "example.com/page").
-const tlds = `com|net|org|io|me|co|info|biz|app|dev|ly|gl|link|xyz|online|store|shop|site|edu|gov|tv|us|uk|sa|ae|eg|qa|kw|bh|om|jo|ma|tn|dz|iq|lb|ps|sy|ye|sd|tr|de|fr|in|pk|ru|cn|ai|gg|to`
+// Links are detected generically, for any site:
+//   - anything starting with a scheme (http://, https://, ftp://) or "www.",
+//     even when glued to other text ("الرابطhttps://…", "Join:https://…");
+//   - bare domains with any alphabetic top-level domain ("zoom.us/j/1",
+//     "mysite.academy", "t.me/x"). File names ("report.pdf") and email
+//     addresses ("a@b.com") are not counted as links.
+var (
+	schemeLinkRe = regexp.MustCompile(`(?i)(?:(?:https?|ftp)://|www\.)\S+`)
+	bareDomainRe = regexp.MustCompile(`(?i)\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+([a-z]{2,24})\b(?:[/?#][^\s]*)?`)
+)
 
-// http(s):// and www. links are found even when glued to other text
-// ("الرابطhttps://…", "Join:https://…"); bare domains need a word boundary.
-var linkRe = regexp.MustCompile(`(?i)(?:https?://\S+|www\.\S+|\b[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.(?:` + tlds + `)\b(?:/\S*)?)`)
-
-// ContainsLink reports whether the text contains a URL or a bare domain.
-func ContainsLink(s string) bool { return linkRe.MatchString(s) }
+// fileExts are endings that look like top-level domains but are file names.
+var fileExts = map[string]bool{
+	"pdf": true, "doc": true, "docx": true, "xls": true, "xlsx": true, "ppt": true, "pptx": true,
+	"txt": true, "csv": true, "rtf": true, "odt": true, "jpg": true, "jpeg": true, "png": true,
+	"gif": true, "webp": true, "bmp": true, "svg": true, "heic": true, "mp3": true, "mp4": true,
+	"m4a": true, "wav": true, "ogg": true, "opus": true, "mov": true, "avi": true, "mkv": true,
+	"zip": true, "rar": true, "exe": true, "apk": true, "msi": true, "dll": true, "json": true,
+	"xml": true, "html": true, "htm": true, "js": true, "css": true, "py": true, "go": true,
+}
 
 // FindLinks returns all links in s.
-func FindLinks(s string) []string { return linkRe.FindAllString(s, -1) }
+func FindLinks(s string) []string {
+	var out []string
+	taken := schemeLinkRe.FindAllStringIndex(s, -1)
+	for _, m := range taken {
+		out = append(out, s[m[0]:m[1]])
+	}
+	for _, m := range bareDomainRe.FindAllStringSubmatchIndex(s, -1) {
+		start, end := m[0], m[1]
+		inside := false
+		for _, t := range taken { // already part of a scheme link
+			if start < t[1] && end > t[0] {
+				inside = true
+				break
+			}
+		}
+		if inside || (start > 0 && s[start-1] == '@') { // email address
+			continue
+		}
+		if fileExts[strings.ToLower(s[m[2]:m[3]])] {
+			continue
+		}
+		out = append(out, s[start:end])
+	}
+	return out
+}
+
+// ContainsLink reports whether the text contains a URL or a bare domain.
+func ContainsLink(s string) bool { return len(FindLinks(s)) > 0 }

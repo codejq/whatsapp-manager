@@ -160,6 +160,22 @@ func wide(w, h int) *image.NRGBA {
 	return canvas
 }
 
+// tall renders the logo centered on a brand-green poster of w×h.
+func tall(w, h int) *image.NRGBA {
+	canvas := image.NewNRGBA(image.Rect(0, 0, w, h))
+	for y := 0; y < h; y++ {
+		c := lerp(green1, green2, float64(y)/float64(h))
+		for x := 0; x < w; x++ {
+			canvas.SetNRGBA(x, y, c)
+		}
+	}
+	s := w * 6 / 10
+	logo := render(s, nil, 0)
+	off := image.Pt((w-s)/2, (h-s)/2)
+	draw.Draw(canvas, logo.Bounds().Add(off), logo, image.Point{}, draw.Over)
+	return canvas
+}
+
 func main() {
 	root := "assets"
 	icons := filepath.Join(root, "icons")
@@ -194,5 +210,12 @@ func main() {
 	writePNG(filepath.Join(msix, "Wide310x150Logo.png"), wide(310, 150))
 	writePNG(filepath.Join(msix, "StoreLogo.png"), render(50, nil, 0))
 	writePNG(filepath.Join(msix, "SplashScreen.png"), wide(620, 300))
+
+	// Partner Center listing artwork (uploaded by hand, not packaged).
+	store := filepath.Join(root, "store")
+	must(os.MkdirAll(store, 0o755))
+	writePNG(filepath.Join(store, "app-icon-300.png"), render(300, nil, 0))
+	writePNG(filepath.Join(store, "box-art-1080.png"), render(1080, nil, 0.12))
+	writePNG(filepath.Join(store, "poster-720x1080.png"), tall(720, 1080))
 	log.Println("icons written to", root)
 }

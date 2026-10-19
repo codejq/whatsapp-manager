@@ -16,7 +16,7 @@
   <Identity Name="__IDENTITY_NAME__" Publisher="__PUBLISHER__" Version="__VERSION__" ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>WhatsApp Manager</DisplayName>
+    <DisplayName>__DISPLAY_NAME__</DisplayName>
     <PublisherDisplayName>__PUBLISHER_DISPLAY__</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <Description>Forward important WhatsApp messages to the right people automatically, by WhatsApp or email.</Description>
@@ -34,7 +34,7 @@
   <Applications>
     <Application Id="WhatsAppManager" Executable="WhatsAppManager.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="WhatsApp Manager"
+        DisplayName="__DISPLAY_NAME__"
         Description="Forward important WhatsApp messages automatically"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
@@ -45,7 +45,7 @@
       <Extensions>
         <!-- Start with Windows (minimized to tray). Users can turn it off in Task Manager → Startup apps. -->
         <desktop:Extension Category="windows.startupTask" Executable="WhatsAppManager.exe" EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="WhatsAppManagerStartup" Enabled="true" DisplayName="WhatsApp Manager" />
+          <desktop:StartupTask TaskId="WhatsAppManagerStartup" Enabled="true" DisplayName="__DISPLAY_NAME__" />
         </desktop:Extension>
         <uap5:Extension Category="windows.appExecutionAlias" Executable="WhatsAppManager.exe" EntryPoint="Windows.FullTrustApplication">
           <uap5:AppExecutionAlias>

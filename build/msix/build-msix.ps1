@@ -32,9 +32,25 @@ function Find-SdkTool($name) {
     throw "$name not found. Install the Windows 10/11 SDK (winget install Microsoft.WindowsSDK.10.0.26100)."
 }
 
-$identity = if ($env:MSIX_IDENTITY_NAME) { $env:MSIX_IDENTITY_NAME } else { 'WhatsAppManager.Dev' }
-$publisher = if ($env:MSIX_PUBLISHER) { $env:MSIX_PUBLISHER } else { 'CN=WhatsAppManagerDev' }
-$display = if ($env:MSIX_PUBLISHER_DISPLAY) { $env:MSIX_PUBLISHER_DISPLAY } else { 'WhatsApp Manager contributors' }
+# Partner Center identity: environment variables (CI) or build/msix/store.local.json
+# (local builds; gitignored; copy store.local.example.json). Dev placeholders otherwise.
+$local = @{}
+$localFile = Join-Path $here 'store.local.json'
+if (Test-Path $localFile) {
+    (Get-Content $localFile -Raw | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $local[$_.Name] = $_.Value }
+    Write-Host "Using Store identity from $localFile"
+}
+function Pick($envName, $key, $default) {
+    $v = [Environment]::GetEnvironmentVariable($envName)
+    if ($v) { return $v }
+    if ($local[$key]) { return $local[$key] }
+    return $default
+}
+$identity = Pick 'MSIX_IDENTITY_NAME' 'identityName' 'WhatsAppManager.Dev'
+$publisher = Pick 'MSIX_PUBLISHER' 'publisher' 'CN=WhatsAppManagerDev'
+$display = Pick 'MSIX_PUBLISHER_DISPLAY' 'publisherDisplayName' 'WhatsApp Manager contributors'
+$appName = Pick 'MSIX_DISPLAY_NAME' 'displayName' 'WhatsApp Manager'
+if ($identity -eq 'WhatsAppManager.Dev') { Write-Warning 'Building with DEV identity placeholders: this package cannot be uploaded to the Store.' }
 
 $layout = Join-Path $OutputDir 'msix-layout'
 if (Test-Path $layout) { Remove-Item -Recurse -Force $layout }
@@ -44,7 +60,8 @@ Copy-Item (Join-Path $root 'assets\msix\*') (Join-Path $layout 'Assets')
 
 $manifest = Get-Content (Join-Path $here 'AppxManifest.xml') -Raw
 $manifest = $manifest.Replace('__IDENTITY_NAME__', $identity).Replace('__PUBLISHER__', $publisher).
-    Replace('__PUBLISHER_DISPLAY__', [Security.SecurityElement]::Escape($display)).Replace('__VERSION__', $Version)
+    Replace('__PUBLISHER_DISPLAY__', [Security.SecurityElement]::Escape($display)).Replace('__VERSION__', $Version).
+    Replace('__DISPLAY_NAME__', [Security.SecurityElement]::Escape($appName))
 [IO.File]::WriteAllText((Join-Path $layout 'AppxManifest.xml'), $manifest, (New-Object Text.UTF8Encoding $false))
 
 $makeappx = Find-SdkTool 'makeappx.exe'

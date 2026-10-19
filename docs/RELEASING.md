@@ -56,6 +56,8 @@ Local equivalent: `./build.ps1 -Version 1.2.0 -Installer -UpdateRepo owner/repo`
 
 ## Microsoft Store (MSIX)
 
+The step-by-step submission kit, with listing text in English and Arabic, is in [STORE_LISTING.md](STORE_LISTING.md).
+
 One-time setup:
 
 1. Register a free individual developer account at https://storedeveloper.microsoft.com. Verification

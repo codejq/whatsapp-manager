@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy to store.local.json (gitignored) and fill from Partner Center > your app > Product management > Product identity.",
+  "identityName": "12345YourPublisher.WhatsAppManager",
+  "publisher": "CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+  "publisherDisplayName": "Quantum Billing LLC",
+  "displayName": "The exact app name you reserved in Partner Center"
+}

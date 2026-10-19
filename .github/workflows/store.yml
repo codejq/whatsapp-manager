@@ -58,6 +58,7 @@ jobs:
           MSIX_IDENTITY_NAME: ${{ secrets.MSIX_IDENTITY_NAME }}
           MSIX_PUBLISHER: ${{ secrets.MSIX_PUBLISHER }}
           MSIX_PUBLISHER_DISPLAY: ${{ secrets.MSIX_PUBLISHER_DISPLAY }}
+          MSIX_DISPLAY_NAME: ${{ vars.MSIX_DISPLAY_NAME }}
         run: ./build.ps1 -Version "${{ steps.v.outputs.version }}" -Channel store -Msix -SkipTests
 
       - uses: microsoft/setup-msstore-cli@v1

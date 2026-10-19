@@ -28,3 +28,4 @@ Thumbs.db
 .vscode/
 .idea/
 /cmd/whatsapp-manager/rsrc_windows_*.syso
+/build/msix/store.local.json

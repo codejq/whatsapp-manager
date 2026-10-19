@@ -157,7 +157,7 @@ func (a *App) registerAPI(mux *http.ServeMux) {
 		var in struct {
 			URL string `json:"url"`
 		}
-		if readJSON(r, &in) != nil || !strings.HasPrefix(in.URL, "https://") {
+		if readJSON(r, &in) != nil || !(strings.HasPrefix(in.URL, "https://") || strings.HasPrefix(in.URL, "mailto:")) {
 			writeErr(w, 400, "errors.bad_request", "")
 			return
 		}

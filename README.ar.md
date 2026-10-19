@@ -38,6 +38,11 @@ WhatsApp Manager تطبيق مجاني ومفتوح المصدر لنظام وي
 
 > **نصيحة:** استخدم رقم واتساب مخصصاً. قد يقيّد واتساب الأرقام التي ترسل رسائل آلية كثيرة.
 
+## بدعم من
+
+**Quantum Billing LLC** — [quantum-billing.com](https://quantum-billing.com/) · ‎+1 361-405-5427‎ ·
+[info@Quantum-Billing.com](mailto:info@Quantum-Billing.com)
+
 ## الترخيص
 
 MIT — راجع [LICENSE](LICENSE) و[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

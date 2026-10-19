@@ -5,6 +5,7 @@ import { app, refreshState } from './state'
 import { get, put, post, hasToken } from './api'
 import { toasts } from './util'
 import Icon from './components/Icon.vue'
+import SidebarAd from './components/SidebarAd.vue'
 import logo from './logo.png'
 
 const route = useRoute()
@@ -63,7 +64,7 @@ const showChrome = computed(() => route.path !== '/welcome')
 <template>
   <div class="flex h-full">
     <!-- Sidebar -->
-    <aside v-if="showChrome" class="flex w-60 shrink-0 flex-col border-e border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <aside v-if="showChrome" class="flex w-60 shrink-0 flex-col overflow-y-auto border-e border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <div class="flex items-center gap-3 px-5 py-5">
         <img :src="logo" alt="" class="h-9 w-9 rounded-xl" />
         <div class="min-w-0">
@@ -82,7 +83,8 @@ const showChrome = computed(() => route.path !== '/welcome')
           <Icon :name="n.icon" :size="18" />{{ $t(n.label) }}
         </router-link>
       </nav>
-      <router-link to="/settings/whatsapp" class="m-3 flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-medium dark:bg-slate-800">
+      <SidebarAd class="mt-4" />
+      <router-link to="/settings/whatsapp" class="m-3 mt-0 flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-medium dark:bg-slate-800">
         <span class="h-2.5 w-2.5 rounded-full" :class="statusInfo.cls" />
         <span>{{ $t(statusInfo.text) }}</span>
         <span v-if="app.general.paused" class="badge-yellow ms-auto">{{ $t('status.paused') }}</span>

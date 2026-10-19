@@ -69,6 +69,11 @@ Development: `go run ./cmd/whatsapp-manager --data-dir .\devdata` runs the app w
 (it never registers autostart in this mode). See [CONTRIBUTING.md](CONTRIBUTING.md) and
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## Powered by
+
+**Quantum Billing LLC** — [quantum-billing.com](https://quantum-billing.com/) · +1 361-405-5427 ·
+[info@Quantum-Billing.com](mailto:info@Quantum-Billing.com)
+
 ## License
 
 MIT — see [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

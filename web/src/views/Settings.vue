@@ -10,6 +10,7 @@ import Icon from '../components/Icon.vue'
 import Toggle from '../components/Toggle.vue'
 import WhatsAppLink from '../components/WhatsAppLink.vue'
 import SmtpForm from '../components/SmtpForm.vue'
+import { PUBLISHER, openExternal } from '../branding'
 
 const props = defineProps({ tab: { type: String, default: '' } })
 const { t } = useI18n()
@@ -210,6 +211,18 @@ async function checkUpdate() {
           <p class="text-sm">{{ $t('app.tagline') }}</p>
           <p class="text-sm text-slate-500">{{ $t('settings.license') }}</p>
           <p class="text-sm text-slate-500">{{ $t('settings.credits') }}</p>
+          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <div class="mb-2 text-sm text-slate-500">{{ $t('powered.by') }}</div>
+            <div class="mb-3 text-lg font-bold">{{ PUBLISHER.name }}</div>
+            <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+              <dt class="text-slate-500">{{ $t('powered.website') }}</dt>
+              <dd><button class="ltr font-medium text-brand-700 hover:underline dark:text-brand-300" @click="openExternal(PUBLISHER.website)">quantum-billing.com</button></dd>
+              <dt class="text-slate-500">{{ $t('powered.phone') }}</dt>
+              <dd class="ltr font-medium" dir="ltr">{{ PUBLISHER.phone }}</dd>
+              <dt class="text-slate-500">{{ $t('powered.email') }}</dt>
+              <dd><button class="ltr font-medium text-brand-700 hover:underline dark:text-brand-300" @click="openExternal('mailto:' + PUBLISHER.email)">{{ PUBLISHER.email }}</button></dd>
+            </dl>
+          </div>
           <div v-if="app.channel === 'github' && !app.packaged" class="flex items-center gap-3">
             <button class="btn-secondary btn-sm" @click="checkUpdate"><Icon name="refresh" :size="14" />{{ $t('settings.updates') }}</button>
             <span v-if="update && update.available" class="badge-green">{{ $t('banner.update', { v: update.latest }) }}</span>

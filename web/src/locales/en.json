@@ -450,5 +450,17 @@
       "autodetect_failed": "Could not find the settings automatically. Choose your provider or enter the server manually.",
       "not_ready": "Waiting for email setup"
     }
+  },
+  "ad": {
+    "label": "Sponsored",
+    "title": "The leading private tutoring platform for Arabic and languages in the region",
+    "text": "Book your private lessons directly on the platform with the best teachers, from kindergarten to university.",
+    "cta": "Book a lesson"
+  },
+  "powered": {
+    "by": "Powered by",
+    "website": "Website",
+    "phone": "Phone",
+    "email": "Email"
   }
 }

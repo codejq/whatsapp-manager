@@ -81,8 +81,11 @@ export function templateRule(kind) {
   return r
 }
 
+// comma returns the list separator for the UI language.
+const comma = () => (i18n.global.locale.value === 'ar' ? '، ' : ', ')
+
 const listJoin = (arr, max = 3) => {
-  const shown = arr.slice(0, max).join('، ')
+  const shown = arr.slice(0, max).join(comma())
   return arr.length > max ? `${shown} +${arr.length - max}` : shown
 }
 
@@ -102,7 +105,7 @@ export function ruleSummary(r) {
       case 'contains_link': return t('rules.cond_link')
       case 'keywords': return t(c.mode === 'all' ? 'rules.cond_keywords_all' : 'rules.cond_keywords_any', { words })
       case 'not_contains': return t('rules.cond_not', { words })
-      case 'message_type': return t('rules.cond_type', { types: (c.types || []).map((x) => t('types.' + x)).join('، ') })
+      case 'message_type': return t('rules.cond_type', { types: (c.types || []).map((x) => t('types.' + x)).join(comma()) })
       default: return ''
     }
   }).filter(Boolean)
@@ -113,7 +116,7 @@ export function ruleSummary(r) {
     return ''
   }).filter(Boolean)
   if (acts.length) parts.push(t('rules.summary_then', { actions: acts.join(t('rules.join_and')) }))
-  return parts.join('، ')
+  return parts.join(comma())
 }
 
 export const MESSAGE_TYPES = ['text', 'image', 'video', 'document', 'audio', 'sticker', 'location', 'contact', 'poll']

@@ -68,7 +68,7 @@ const showChrome = computed(() => route.path !== '/welcome')
       <div class="flex items-center gap-3 px-5 py-5">
         <img :src="logo" alt="" class="h-9 w-9 rounded-xl" />
         <div class="min-w-0">
-          <div class="truncate font-bold leading-tight">WhatsApp Manager</div>
+          <div class="whitespace-nowrap text-[15px] font-bold leading-tight">WhatsApp Manager</div>
           <div class="text-xs text-slate-500 ltr">v{{ app.version }}</div>
         </div>
       </div>

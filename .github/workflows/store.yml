@@ -1,7 +1,8 @@
 name: Microsoft Store
 
-# Builds the MSIX and submits it to Partner Center. Runs after a stable
-# release, or manually. Requires the secrets listed in docs/RELEASING.md.
+# Builds the MSIX and submits it to Partner Center after each stable
+# release, or manually. Needs the "store" environment secrets listed in
+# docs/RELEASING.md; until they exist the job is skipped.
 on:
   workflow_run:
     workflows: [Release]
@@ -9,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g. 1.2.0)'
+        description: 'Version to publish, without "v" (e.g. 1.2.0)'
         required: true
 
 permissions:
@@ -17,13 +18,30 @@ permissions:
 
 jobs:
   store:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && !contains(github.event.workflow_run.head_branch, '-')) }}
+    if: >-
+      vars.STORE_ENABLED == 'true' && (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.conclusion == 'success' && !contains(github.event.workflow_run.head_branch, '-'))
+      )
     runs-on: windows-latest
+    timeout-minutes: 45
     environment: store
     steps:
+      - name: Resolve version
+        id: v
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          RUN_TAG: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          $v = if ($env:INPUT_VERSION) { $env:INPUT_VERSION } else { $env:RUN_TAG }
+          $v = $v.TrimStart('v')
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { Write-Error "Not a stable version: $v"; exit 1 }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.event.workflow_run.head_branch }}
+          ref: v${{ steps.v.outputs.version }}
 
       - uses: actions/setup-go@v5
         with:
@@ -32,12 +50,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Resolve version
-        id: v
-        run: |
-          $v = if ("${{ github.event_name }}" -eq 'workflow_dispatch') { "${{ inputs.version }}" } else { "${{ github.event.workflow_run.head_branch }}".TrimStart('v') }
-          "version=$v" >> $env:GITHUB_OUTPUT
+          cache: npm
+          cache-dependency-path: web/package-lock.json
 
       - name: Build MSIX
         env:
@@ -46,10 +60,21 @@ jobs:
           MSIX_PUBLISHER_DISPLAY: ${{ secrets.MSIX_PUBLISHER_DISPLAY }}
         run: ./build.ps1 -Version "${{ steps.v.outputs.version }}" -Channel store -Msix -SkipTests
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: msix-${{ steps.v.outputs.version }}
+          path: dist/*.msix
+
       - uses: microsoft/setup-msstore-cli@v1
 
       - name: Submit to Partner Center
+        env:
+          STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
+          STORE_SELLER_ID: ${{ secrets.STORE_SELLER_ID }}
+          STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
+          STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+          STORE_PRODUCT_ID: ${{ secrets.STORE_PRODUCT_ID }}
         run: |
-          msstore reconfigure --tenantId "${{ secrets.STORE_TENANT_ID }}" --sellerId "${{ secrets.STORE_SELLER_ID }}" --clientId "${{ secrets.STORE_CLIENT_ID }}" --clientSecret "${{ secrets.STORE_CLIENT_SECRET }}"
+          msstore reconfigure --tenantId $env:STORE_TENANT_ID --sellerId $env:STORE_SELLER_ID --clientId $env:STORE_CLIENT_ID --clientSecret $env:STORE_CLIENT_SECRET
           $msix = Get-ChildItem dist -Filter *.msix | Select-Object -First 1
-          msstore publish $msix.FullName -id "${{ secrets.STORE_PRODUCT_ID }}"
+          msstore publish $msix.FullName -id $env:STORE_PRODUCT_ID

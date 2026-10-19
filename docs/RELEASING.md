@@ -1,5 +1,29 @@
 # Releasing
 
+## First upload to GitHub
+
+1. Create an **empty** repository on GitHub (no README, licence or .gitignore, because they already exist here).
+2. Push:
+   ```powershell
+   git remote add origin https://github.com/<owner>/<repo>.git
+   git push -u origin main
+   ```
+3. On GitHub, open **Actions** and enable workflows if asked. **CI** runs on every push and pull request.
+   Each run attaches a test installer under *Artifacts*.
+4. Recommended settings:
+   - **Settings → Branches**: protect `main` and require the **CI** check.
+   - **Settings → Code security**: enable *Private vulnerability reporting* (used by `SECURITY.md`) and
+     *Dependabot alerts*. `.github/dependabot.yml` opens weekly update PRs.
+   - **Settings → Actions → General → Workflow permissions**: leave the default (read). The release
+     workflow asks for `contents: write` itself.
+5. Publish the first release: `git tag v0.1.0`, then `git push origin v0.1.0`.
+
+| Workflow | Runs when | Does |
+|---|---|---|
+| `ci.yml` | push to `main`, pull requests, manual | lint, tests, builds the exe, zip and installer (artifact) |
+| `release.yml` | tag `vX.Y.Z` | builds, signs if SignPath is configured, publishes a GitHub Release |
+| `store.yml` | after a stable release, or manual | builds the MSIX and submits it to the Microsoft Store (only when the `STORE_ENABLED` variable is `true`) |
+
 ## GitHub release (every version)
 
 1. Make sure `main` is green in CI.
@@ -47,7 +71,8 @@ One-time setup:
    `STORE_TENANT_ID`, `STORE_SELLER_ID`, `STORE_CLIENT_ID`, `STORE_CLIENT_SECRET`, `STORE_PRODUCT_ID`,
    `MSIX_IDENTITY_NAME`, `MSIX_PUBLISHER`, `MSIX_PUBLISHER_DISPLAY`.
 
-After that, `.github/workflows/store.yml` runs after every stable release, or manually, and submits the
+Then set the repository variable `STORE_ENABLED` = `true` (Settings → Secrets and variables → Actions →
+Variables). After that, `.github/workflows/store.yml` runs after every stable release, or manually, and submits the
 MSIX with `msstore publish`. The Store signs the package. The Store build:
 
 - has the update check turned off, because the Store updates the app;

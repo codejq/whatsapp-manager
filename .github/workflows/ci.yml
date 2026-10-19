@@ -4,13 +4,19 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -24,26 +30,32 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      - name: Web UI
+      - name: Web UI (lint + build)
         working-directory: web
         run: |
           npm ci
           npm run lint
           npm run build
 
-      - name: Go checks
+      - name: Go checks (gofmt, vet, tests)
         run: |
           $fmt = gofmt -l cmd internal tools assets
           if ($fmt) { Write-Error "gofmt needed: $fmt"; exit 1 }
           go vet ./...
           go test ./...
 
-      - name: Build
+      - name: Install Inno Setup
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Build exe, portable zip and installer
         run: ./build.ps1 -SkipUI -SkipTests -Installer -Version 0.0.0-ci
 
       - uses: actions/upload-artifact@v4
         with:
-          name: whatsapp-manager-ci
+          name: whatsapp-manager-ci-${{ github.sha }}
           path: |
             dist/*.exe
             dist/*.zip

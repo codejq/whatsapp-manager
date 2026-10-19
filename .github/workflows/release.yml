@@ -1,5 +1,8 @@
 name: Release
 
+# Push a tag like v1.2.0 to publish a GitHub Release with the installer,
+# the portable zip and checksums. Tags with a "-" (v1.3.0-beta.1) are
+# published as pre-releases.
 on:
   push:
     tags: ['v*.*.*']
@@ -7,9 +10,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: windows-latest
+    timeout-minutes: 45
     environment: release
     steps:
       - uses: actions/checkout@v4
@@ -24,20 +32,25 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      - name: Build
+      - name: Install Inno Setup
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Build (tests included)
         run: ./build.ps1 -Version "${{ github.ref_name }}" -Channel github -UpdateRepo "${{ github.repository }}" -Installer
 
       # Free code signing for open-source projects via SignPath Foundation.
-      # Enabled once the project is accepted and these secrets/vars exist.
-      - name: Upload unsigned artifacts for signing
+      # Skipped until the repository variables/secrets below exist
+      # (see docs/RELEASING.md).
+      - name: Upload unsigned files for signing
         id: unsigned
         if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: unsigned
-          path: |
-            dist/app/WhatsAppManager.exe
-            dist/*.exe
+          path: dist/*.exe
 
       - name: Sign with SignPath
         if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
@@ -51,17 +64,21 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: dist/signed
 
-      - name: Use signed files
+      - name: Use signed files and refresh checksums
         if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
         run: |
           Copy-Item dist/signed/*.exe dist/ -Force
-          Get-ChildItem dist -File | Where-Object { $_.Extension -in '.zip','.exe' } | ForEach-Object {
+          Get-ChildItem dist -File | Where-Object { $_.Extension -in '.zip', '.exe' } | ForEach-Object {
             "$((Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLower())  $($_.Name)"
           } | Set-Content -Encoding ascii dist/checksums.txt
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
         run: |
-          $pre = if ("${{ github.ref_name }}" -match '-') { '--prerelease' } else { '' }
-          gh release create "${{ github.ref_name }}" dist/*.exe dist/*.zip dist/checksums.txt --title "WhatsApp Manager ${{ github.ref_name }}" --generate-notes $pre
+          $files = @(Get-ChildItem dist -File | Where-Object { $_.Extension -in '.exe', '.zip' -or $_.Name -eq 'checksums.txt' } | ForEach-Object { $_.FullName })
+          $ghArgs = @('release', 'create', $env:TAG) + $files + @('--title', "WhatsApp Manager $env:TAG", '--generate-notes')
+          if ($env:TAG -match '-') { $ghArgs += '--prerelease' }
+          gh @ghArgs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

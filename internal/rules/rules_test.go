@@ -31,6 +31,13 @@ func TestContainsLink(t *testing.T) {
 		"visit example.com today",
 		"رابط: shop.example.sa/p/1",
 		"join chat.whatsapp.com/AbC123",
+		"https://us05web.zoom.us/j/87200890466?pwd=X3IGJUhR8jU7zgkyiV13O7sP6mJPuq.1",
+		"Reham Hamdy is inviting you to a scheduled Zoom meeting.\r\nJoin Zoom Meeting\r\nhttps://us04web.zoom.us/j/7",
+		"رابط الحصةhttps://zoom.us/j/123",
+		"Join:https://meet.google.com/abc-defg-hij",
+		"الرابط(https://zoom.us/j/1)",
+		"linkwww.zoom.us/j/9",
+		"ادخل على zoom.us/j/123456 الآن",
 	}
 	no := []string{"hello world", "price is 3.50", "file.pdf attached", "مرحبا"}
 	for _, s := range yes {

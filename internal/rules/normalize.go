@@ -104,7 +104,9 @@ func isWordRune(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) 
 // Common TLDs used for bare-domain link detection (e.g. "example.com/page").
 const tlds = `com|net|org|io|me|co|info|biz|app|dev|ly|gl|link|xyz|online|store|shop|site|edu|gov|tv|us|uk|sa|ae|eg|qa|kw|bh|om|jo|ma|tn|dz|iq|lb|ps|sy|ye|sd|tr|de|fr|in|pk|ru|cn|ai|gg|to`
 
-var linkRe = regexp.MustCompile(`(?i)(?:\bhttps?://\S+|\bwww\.\S+|\b[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.(?:` + tlds + `)\b(?:/\S*)?)`)
+// http(s):// and www. links are found even when glued to other text
+// ("الرابطhttps://…", "Join:https://…"); bare domains need a word boundary.
+var linkRe = regexp.MustCompile(`(?i)(?:https?://\S+|www\.\S+|\b[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.(?:` + tlds + `)\b(?:/\S*)?)`)
 
 // ContainsLink reports whether the text contains a URL or a bare domain.
 func ContainsLink(s string) bool { return linkRe.MatchString(s) }

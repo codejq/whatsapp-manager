@@ -187,6 +187,29 @@ func TestEndToEndNoDuplicates(t *testing.T) {
 	}
 }
 
+// WhatsApp can deliver a group message as two webhook events with the same
+// ID: an empty sender-key carrier first, then the real text. The real one
+// must not be dropped as a duplicate.
+func TestEmptyCarrierThenRealMessage(t *testing.T) {
+	h := newHarness(t)
+	group := "120363419648840728@g.us"
+	saveRule(t, h.st, &rules.Rule{ID: "r1", Name: "Links", Enabled: true,
+		Source:     rules.Source{Kind: rules.SourceChats, Chats: []rules.Peer{{JID: group}}},
+		Conditions: rules.Conditions{Items: []rules.Condition{{Type: rules.CondContainsLink}}},
+		Actions:    []rules.Action{{Type: rules.ActionEmail, Emails: []string{"a@example.com"}}},
+	})
+	ts := time.Now().UTC().Format(time.RFC3339)
+	empty := fmt.Sprintf(`{"event":"message","device_id":"d","payload":{"id":"3EB0X","chat_id":%q,"from":"966570529330@s.whatsapp.net","timestamp":%q,"is_from_me":false}}`, group, ts)
+	real := msgJSON("3EB0X", group, "966570529330@s.whatsapp.net", "https://us05web.zoom.us/j/87200890466?pwd=abc", false)
+	if h.deliver(t, empty) != 200 || h.deliver(t, real) != 200 {
+		t.Fatal("webhook rejected")
+	}
+	h.drain(t)
+	if len(h.emails) != 1 {
+		t.Fatalf("emails = %d, want 1 (real message was dropped)", len(h.emails))
+	}
+}
+
 func TestBadSignatureRejected(t *testing.T) {
 	h := newHarness(t)
 	body := msgJSON("X", "1@s.whatsapp.net", "1@s.whatsapp.net", "hi", false)

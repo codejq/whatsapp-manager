@@ -171,6 +171,10 @@ func TestEndToEndNoDuplicates(t *testing.T) {
 	if len(h.emails) != 1 {
 		t.Fatalf("emails = %d, want exactly 1", len(h.emails))
 	}
+	if e := h.emails[0]; !strings.Contains(e.Text, "s-i-u.com") || !strings.Contains(e.HTML, "s-i-u.com") ||
+		strings.Index(e.HTML, "s-i-u.com") < strings.Index(e.HTML, "example.com/offer") {
+		t.Fatal("sponsor ad missing or not at the end of the email")
+	}
 	if !strings.HasPrefix(h.emails[0].Subject, "[WhatsApp #1] ") {
 		t.Fatalf("subject without counter: %q", h.emails[0].Subject)
 	}

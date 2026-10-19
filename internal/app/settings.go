@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	"whatsapp-manager/internal/branding"
 	"whatsapp-manager/internal/dispatch"
 	"whatsapp-manager/internal/mail"
 )
@@ -187,7 +188,12 @@ func (a *App) TestSMTP(ctx context.Context, sendTo string) (SMTPStatus, error) {
 		if g.Language == "ar" {
 			subject, body = "WhatsApp Manager — رسالة تجريبية", "إعدادات البريد تعمل بنجاح. يمكن لـ WhatsApp Manager الآن تحويل الرسائل إلى البريد الإلكتروني."
 		}
-		err = mail.Send(ctx, s, mail.Email{To: []string{sendTo}, Subject: subject, Text: body})
+		dir := "rtl"
+		if g.Language == "en" {
+			dir = "ltr"
+		}
+		htmlBody := branding.AppendToHTML(`<!doctype html><html dir="`+dir+`"><body style="font-family:Segoe UI,Tahoma,Arial,sans-serif;font-size:14px"><p>`+body+`</p></body></html>`, g.Language)
+		err = mail.Send(ctx, s, mail.Email{To: []string{sendTo}, Subject: subject, Text: body + branding.AdText(g.Language), HTML: htmlBody})
 	} else {
 		err = mail.Test(ctx, s)
 	}

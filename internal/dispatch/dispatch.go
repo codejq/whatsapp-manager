@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"whatsapp-manager/internal/branding"
 	"whatsapp-manager/internal/gowa"
 	"whatsapp-manager/internal/mail"
 	"whatsapp-manager/internal/rules"
@@ -423,6 +424,9 @@ func (x *Dispatcher) BuildEmail(ctx context.Context, job store.OutboxItem, msg *
 			}
 		}
 	}
+	// Sponsor ad at the very end of every email.
+	e.Text += branding.AdText(lang)
+	e.HTML = branding.AppendToHTML(e.HTML, lang)
 	return e
 }
 

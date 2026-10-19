@@ -1,0 +1,55 @@
+name: Microsoft Store
+
+# Builds the MSIX and submits it to Partner Center. Runs after a stable
+# release, or manually. Requires the secrets listed in docs/RELEASING.md.
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.2.0)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  store:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && !contains(github.event.workflow_run.head_branch, '-')) }}
+    runs-on: windows-latest
+    environment: store
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.event.workflow_run.head_branch }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Resolve version
+        id: v
+        run: |
+          $v = if ("${{ github.event_name }}" -eq 'workflow_dispatch') { "${{ inputs.version }}" } else { "${{ github.event.workflow_run.head_branch }}".TrimStart('v') }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Build MSIX
+        env:
+          MSIX_IDENTITY_NAME: ${{ secrets.MSIX_IDENTITY_NAME }}
+          MSIX_PUBLISHER: ${{ secrets.MSIX_PUBLISHER }}
+          MSIX_PUBLISHER_DISPLAY: ${{ secrets.MSIX_PUBLISHER_DISPLAY }}
+        run: ./build.ps1 -Version "${{ steps.v.outputs.version }}" -Channel store -Msix -SkipTests
+
+      - uses: microsoft/setup-msstore-cli@v1
+
+      - name: Submit to Partner Center
+        run: |
+          msstore reconfigure --tenantId "${{ secrets.STORE_TENANT_ID }}" --sellerId "${{ secrets.STORE_SELLER_ID }}" --clientId "${{ secrets.STORE_CLIENT_ID }}" --clientSecret "${{ secrets.STORE_CLIENT_SECRET }}"
+          $msix = Get-ChildItem dist -Filter *.msix | Select-Object -First 1
+          msstore publish $msix.FullName -id "${{ secrets.STORE_PRODUCT_ID }}"

@@ -425,3 +425,33 @@ packaged and unpackaged builds. The app never writes next to its own exe.
 - Store listing in Arabic and English, screenshots, an age rating questionnaire, and a description that makes
   clear the app is not affiliated with WhatsApp or Meta.
 - Run the Windows App Certification Kit (WACK) in CI on the MSIX.
+
+## 14. Implementation status (2026-10-19)
+
+| Milestone | Status | Notes |
+|---|---|---|
+| M0 Scaffold | ✅ Done | Repo files (LICENSE, README ar/en, CONTRIBUTING, SECURITY, CoC), `build.ps1`, `ci.yml` |
+| M1 GoWA supervisor | ✅ Done | Verified live: GoWA killed → restarted in about 2 s; manager killed → the job object killed GoWA |
+| M2 Login | ✅ Done | QR (verified live, real WhatsApp QR) and pairing code; logout; reconnect |
+| M3 Webhook + inbox | ✅ Done | Verified live: the same signed webhook ×3 → 1 inbox row; a bad signature → 401 |
+| M4 Rule engine | ✅ Done | Table-driven tests in Arabic and English; Try-it endpoint and UI |
+| M5 Dispatch | ✅ Done | Verified live against a local SMTP server; integration tests cover dedup, loops, offline, permanent failure |
+| M6 GUI | ✅ Done | All screens in ar/en with RTL; checked with headless screenshots |
+| M7 Windows polish | ✅ Done | Tray, autostart, toasts, single instance, sleep/resume, DPAPI |
+| M8 GitHub release | ✅ Pipeline ready | `release.yml`; the installer was verified locally with a silent install and uninstall. SignPath needs an application after the first release |
+| M9 Hardening | 🟡 Partial | Chaos checks done (GoWA kill, manager kill, bad auth/host/signature). **Still to do:** a 72 h soak test and an end-to-end test with a real WhatsApp number (needs a phone) |
+| M10 Microsoft Store | 🟡 Pipeline ready | Manifest, assets, `build-msix.ps1` and `store.yml` exist. Needs the Partner Center account and secrets (see docs/RELEASING.md). The MSIX was not built locally because the Windows SDK is not installed here; CI runners have it |
+
+Deviations from the plan, with reasons:
+
+- **Sleep/resume** is detected from a gap between supervisor ticks (more than 2× the interval), not from
+  `WM_POWERBROADCAST`. It needs no window message hook and covers hibernate and long stalls too.
+- **Second-instance activation** goes through a token-protected loopback endpoint (`/ipc/show`, with the
+  port and token in `instance.json`), not a named pipe. It reuses the existing HTTP server.
+- **SMTP** opens a new connection for each email instead of reusing one connection with a 60 s idle timeout.
+  Volumes are low, and this is simpler and more robust. The rate limit (30/min) still applies.
+- **Toasts** use the WinRT toast API through a hidden PowerShell process. The installer sets the
+  AppUserModelID on the Start-menu shortcut.
+- **MSIX autostart**: the StartupTask cannot pass `--minimized`, so a packaged launch within 5 minutes of
+  boot starts in the tray.
+- **The WACK run in CI** is not wired yet. Run it manually before the first Store submission.

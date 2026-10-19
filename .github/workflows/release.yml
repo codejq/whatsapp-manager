@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build
+        run: ./build.ps1 -Version "${{ github.ref_name }}" -Channel github -UpdateRepo "${{ github.repository }}" -Installer
+
+      # Free code signing for open-source projects via SignPath Foundation.
+      # Enabled once the project is accepted and these secrets/vars exist.
+      - name: Upload unsigned artifacts for signing
+        id: unsigned
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned
+          path: |
+            dist/app/WhatsAppManager.exe
+            dist/*.exe
+
+      - name: Sign with SignPath
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: dist/signed
+
+      - name: Use signed files
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        run: |
+          Copy-Item dist/signed/*.exe dist/ -Force
+          Get-ChildItem dist -File | Where-Object { $_.Extension -in '.zip','.exe' } | ForEach-Object {
+            "$((Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLower())  $($_.Name)"
+          } | Set-Content -Encoding ascii dist/checksums.txt
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $pre = if ("${{ github.ref_name }}" -match '-') { '--prerelease' } else { '' }
+          gh release create "${{ github.ref_name }}" dist/*.exe dist/*.zip dist/checksums.txt --title "WhatsApp Manager ${{ github.ref_name }}" --generate-notes $pre

@@ -68,8 +68,31 @@ messages that match user-defined rules** to WhatsApp contacts or groups, or to e
 9. SMTP auth failure pauses all email dispatch, and queued emails do not use up retries while it is paused.
    Retries: network, timeout and 4xx are transient; auth and 5xx are permanent.
 
+## Repo map & dev facts
+
+- `cmd/whatsapp-manager`: entry point (tray via `fyne.io/systray`, WebView2 window, single instance).
+- `internal/app`: wiring, settings, the local API (`api.go`) and maintenance. `internal/gowa`: client and
+  supervisor. `internal/rules`: pure matcher. `internal/engine`: inbox → outbox. `internal/dispatch`:
+  senders. `internal/store`: SQLite and migrations. `internal/mail`: SMTP. `internal/webhook`: receiver.
+  `internal/winx`: Windows APIs. `internal/ui`: embedded `web/` build (`internal/ui/dist`).
+- `web/`: Vue 3 + Vite + Tailwind 4 + vue-i18n 11 + vue-router 5. `web/go.mod` exists only to keep
+  `go ./...` out of `node_modules`.
+- The Go module path is `whatsapp-manager`, not a GitHub path. The GitHub owner/repo is passed at build
+  time (`-UpdateRepo`, `main.updateRepo`).
+- GoWA uses the fixed device slot `main` (header `X-Device-Id: main`), created with `POST /devices`.
+  `is_logged_in` is false while the socket is down, so "paired" = `is_logged_in || jid != ""`.
+- GoWA stores the message before it calls the webhook, so `POST /message/{id}/forward` works for webhook
+  messages. A forward that fails permanently falls back to a copy.
+- Media in the webhook is either a string path or `{path, caption}` / `{url}`. Paths are relative to GoWA's
+  working directory (`<data>\gowa\statics\media`).
+- Dev run: `go run ./cmd/whatsapp-manager --data-dir .\devdata`. A custom data dir never touches autostart.
+  `WAM_UI_TOKEN` (hex, at least 16 characters) fixes the UI token for automated tests. `WAM_GOWA_EXE`
+  overrides the GoWA path.
+- The UI token must be hex: the SPA reads it with `/[?&]t=([a-f0-9]+)/`.
+- vue-i18n: write `@` in messages as `{'@'}`.
+- Build: `./build.ps1 [-Version x.y.z] [-Installer] [-Msix] [-Channel github|store]` → `dist/`.
+
 ## Conventions
 
-- Go code lives in `/internal/<area>`, the entry point in `/cmd/whatsapp-manager`, and the UI in `/web`.
 - Never commit secrets, `*.db`, the GoWA binary, `statics/` or `storages/`.
 - The plan and milestones are in `docs/PLAN.md`. Record architecture changes there and in this file.

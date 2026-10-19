@@ -1,0 +1,33 @@
+name: Bug report / بلاغ عن مشكلة
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / ماذا حدث؟
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / خطوات إعادة المشكلة
+  - type: input
+    id: version
+    attributes:
+      label: App version / إصدار التطبيق
+      description: Settings → About
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version / إصدار ويندوز
+  - type: markdown
+    attributes:
+      value: |
+        Please attach the diagnostics file (Settings → Help → Download diagnostics). It contains logs and
+        settings but no passwords. Remove anything private before uploading.
+
+        يرجى إرفاق ملف التشخيص (الإعدادات ← المساعدة ← تنزيل ملف التشخيص).

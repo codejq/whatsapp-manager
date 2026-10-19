@@ -60,11 +60,6 @@ jobs:
           MSIX_PUBLISHER_DISPLAY: ${{ secrets.MSIX_PUBLISHER_DISPLAY }}
         run: ./build.ps1 -Version "${{ steps.v.outputs.version }}" -Channel store -Msix -SkipTests
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: msix-${{ steps.v.outputs.version }}
-          path: dist/*.msix
-
       - uses: microsoft/setup-msstore-cli@v1
 
       - name: Submit to Partner Center

@@ -43,6 +43,10 @@ messages that match user-defined rules** to WhatsApp contacts or groups, or to e
   sender_display_name, from_name, timestamp (RFC3339), is_from_me, body`, plus media objects
   (`image|video|document: {path|url, caption}`; `audio|sticker`: path string).
 - Signature: header `X-Hub-Signature-256: sha256=<hex HMAC-SHA256(rawBody, secret)>`.
+- **One message ID can arrive as two webhook events.** In groups, WhatsApp may first deliver a
+  sender-key-distribution carrier with no content (GoWA logs "Unrecognized message type …
+  senderKeyDistributionMessage"), then the real message with the same ID. The receiver skips events
+  without content (`webhook.HasContent`); otherwise the inbox dedup key would drop the real message.
 - **GoWA retries a failed webhook up to 5 times** (1/2/4/8 s backoff), so duplicates are expected.
 - Group JIDs end in `@g.us`. Users use `@s.whatsapp.net` or `@lid` (LID migration: match both `from` and `from_lid`).
 - Device-scoped REST calls accept the `X-Device-Id` header. With a single device, it is the default.

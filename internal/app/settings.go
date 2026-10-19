@@ -22,24 +22,24 @@ const (
 
 // General are user-facing preferences.
 type General struct {
-	Language           string `json:"language"` // ar | en
-	Theme              string `json:"theme"`    // system | light | dark
-	Autostart          bool   `json:"autostart"`
-	CatchupHours       int    `json:"catchup_hours"`
-	WARatePerMin       int    `json:"wa_rate_per_min"`
-	EmailRatePerMin    int    `json:"email_rate_per_min"`
-	Paused             bool   `json:"paused"`
-	FirstRunDone       bool   `json:"first_run_done"`
-	CloseHintShown     bool   `json:"close_hint_shown"`
-	RetentionDays      int    `json:"retention_days"`
-	MediaRetentionDays int    `json:"media_retention_days"`
-	UpdateCheck        bool   `json:"update_check"`
+	Language            string `json:"language"` // ar | en
+	Theme               string `json:"theme"`    // system | light | dark
+	Autostart           bool   `json:"autostart"`
+	CatchupHours        int    `json:"catchup_hours"`
+	WARatePerMin        int    `json:"wa_rate_per_min"`
+	EmailRatePerMin     int    `json:"email_rate_per_min"`
+	Paused              bool   `json:"paused"`
+	FirstRunDone        bool   `json:"first_run_done"`
+	CloseHintShown      bool   `json:"close_hint_shown"`
+	RetentionDays       int    `json:"retention_days"` // messages, history and media older than this are deleted
+	EmailSubjectCounter bool   `json:"email_subject_counter"`
+	UpdateCheck         bool   `json:"update_check"`
 }
 
 func defaultGeneral() General {
 	return General{
 		Language: "ar", Theme: "system", Autostart: true, CatchupHours: 12,
-		WARatePerMin: 20, EmailRatePerMin: 30, RetentionDays: 30, MediaRetentionDays: 7, UpdateCheck: true,
+		WARatePerMin: 20, EmailRatePerMin: 30, RetentionDays: 5, EmailSubjectCounter: true, UpdateCheck: true,
 	}
 }
 
@@ -56,7 +56,6 @@ func (g *General) normalize() {
 	g.WARatePerMin = clamp(g.WARatePerMin, 1, 60)
 	g.EmailRatePerMin = clamp(g.EmailRatePerMin, 1, 120)
 	g.RetentionDays = clamp(g.RetentionDays, 1, 365)
-	g.MediaRetentionDays = clamp(g.MediaRetentionDays, 1, 90)
 }
 
 func clamp(v, lo, hi int) int {
@@ -116,6 +115,9 @@ func (a *App) SaveGeneral(ctx context.Context, g General) (General, error) {
 	a.mu.Unlock()
 	if old.Autostart != g.Autostart {
 		a.applyAutostart(g.Autostart)
+	}
+	if old.RetentionDays != g.RetentionDays {
+		go a.cleanup(context.Background()) // apply a shorter period right away
 	}
 	if old.Paused != g.Paused || old.Language != g.Language {
 		a.notifyTray()

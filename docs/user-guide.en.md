@@ -71,6 +71,10 @@ The Activity page lists every received message, the rule it matched, and each de
 - After the PC was off, messages older than the **catch-up window** (12 hours by default) are not
   forwarded.
 - WhatsApp sends are limited to 20 per minute by default (Settings → General).
+- Old messages and history are deleted automatically after **5 days** by default. Change the period in
+  Settings → General → *Delete messages older than*.
+- Each email subject gets a running number, such as "[WhatsApp #42]", so Gmail does not group the emails
+  into one conversation. Turn it off in Settings → Email.
 
 ## 7. Help
 

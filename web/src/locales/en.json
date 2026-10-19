@@ -1,16 +1,55 @@
 {
-  "app": { "name": "WhatsApp Manager", "tagline": "Forward the WhatsApp messages that matter, automatically." },
-  "nav": { "dashboard": "Home", "rules": "Rules", "activity": "Activity", "settings": "Settings" },
+  "app": {
+    "name": "WhatsApp Manager",
+    "tagline": "Forward the WhatsApp messages that matter, automatically."
+  },
+  "nav": {
+    "dashboard": "Home",
+    "rules": "Rules",
+    "activity": "Activity",
+    "settings": "Settings"
+  },
   "common": {
-    "save": "Save", "cancel": "Cancel", "close": "Close", "delete": "Delete", "edit": "Edit", "back": "Back", "next": "Next",
-    "finish": "Finish", "skip": "Skip for now", "retry": "Try again", "refresh": "Refresh", "search": "Search…", "loading": "Loading…",
-    "saved": "Saved", "yes": "Yes", "no": "No", "on": "On", "off": "Off", "add": "Add", "remove": "Remove", "details": "Details",
-    "copy": "Copy", "copied": "Copied", "test": "Test", "duplicate": "Duplicate", "confirm_delete": "Delete this? This cannot be undone.",
-    "optional": "optional", "none": "None", "learn_more": "Learn more", "more": "Load more", "done": "Done"
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "skip": "Skip for now",
+    "retry": "Try again",
+    "refresh": "Refresh",
+    "search": "Search…",
+    "loading": "Loading…",
+    "saved": "Saved",
+    "yes": "Yes",
+    "no": "No",
+    "on": "On",
+    "off": "Off",
+    "add": "Add",
+    "remove": "Remove",
+    "details": "Details",
+    "copy": "Copy",
+    "copied": "Copied",
+    "test": "Test",
+    "duplicate": "Duplicate",
+    "confirm_delete": "Delete this? This cannot be undone.",
+    "optional": "optional",
+    "none": "None",
+    "learn_more": "Learn more",
+    "more": "Load more",
+    "done": "Done"
   },
   "status": {
-    "connected": "Connected", "disconnected": "Reconnecting…", "logged_out": "Not linked", "unknown": "Starting…",
-    "starting": "Starting WhatsApp service…", "error": "Service problem", "paused": "Rules paused"
+    "connected": "Connected",
+    "disconnected": "Reconnecting…",
+    "logged_out": "Not linked",
+    "unknown": "Starting…",
+    "starting": "Starting WhatsApp service…",
+    "error": "Service problem",
+    "paused": "Rules paused"
   },
   "banner": {
     "paused": "All rules are paused. Incoming messages are not forwarded.",
@@ -186,8 +225,16 @@
     "only_new": "Only messages that arrive after the rule is saved are forwarded."
   },
   "types": {
-    "text": "Text", "image": "Photo", "video": "Video", "document": "Document", "audio": "Voice / audio",
-    "sticker": "Sticker", "location": "Location", "contact": "Contact card", "poll": "Poll", "other": "Other"
+    "text": "Text",
+    "image": "Photo",
+    "video": "Video",
+    "document": "Document",
+    "audio": "Voice / audio",
+    "sticker": "Sticker",
+    "location": "Location",
+    "contact": "Contact card",
+    "poll": "Poll",
+    "other": "Other"
   },
   "picker": {
     "groups": "Groups",
@@ -220,8 +267,13 @@
     "cancel_send": "Cancel",
     "not_matched": "Not forwarded",
     "st": {
-      "pending": "Waiting", "sending": "Sending", "sent": "Sent", "failed": "Failed", "uncertain": "Unknown",
-      "waiting_email": "Waiting for email", "cancelled": "Cancelled"
+      "pending": "Waiting",
+      "sending": "Sending",
+      "sent": "Sent",
+      "failed": "Failed",
+      "uncertain": "Unknown",
+      "waiting_email": "Waiting for email",
+      "cancelled": "Cancelled"
     },
     "uncertain_help": "The app stopped while sending this. It may or may not have arrived — send again only if needed.",
     "reason": {
@@ -266,7 +318,6 @@
     "catchup_text": "After the PC was off or offline, messages older than this are not forwarded.",
     "rate": "WhatsApp sends per minute",
     "rate_text": "Lower is safer. WhatsApp may restrict numbers that send too fast.",
-    "retention": "Keep history (days)",
     "updates": "Check for new versions",
     "export": "Export rules",
     "export_text": "Save your rules to a file (no passwords are included).",
@@ -282,7 +333,11 @@
     "version": "Version",
     "license": "Open source under the MIT licence.",
     "credits": "WhatsApp connectivity by GoWA (go-whatsapp-web-multidevice, MIT). Not affiliated with WhatsApp or Meta.",
-    "privacy": "Your messages and settings stay on this computer. Nothing is sent anywhere except WhatsApp traffic and the emails your rules send."
+    "privacy": "Your messages and settings stay on this computer. Nothing is sent anywhere except WhatsApp traffic and the emails your rules send.",
+    "cleanup": "Delete messages older than (days)",
+    "cleanup_text": "Old messages, activity history and downloaded files are deleted automatically. Messages still waiting to be sent are kept.",
+    "subject_counter": "Number each email subject",
+    "subject_counter_text": "Adds a running number, e.g. “[WhatsApp #42]”, so Gmail and Outlook show every forwarded message separately instead of grouping them into one conversation."
   },
   "smtp": {
     "title": "Email (SMTP) settings",

@@ -152,3 +152,64 @@ func TestRulesCRUDAndBackup(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestNextCounter(t *testing.T) {
+	s := openTest(t)
+	ctx := context.Background()
+	for want := int64(1); want <= 3; want++ {
+		n, err := s.NextCounter(ctx, "c")
+		if err != nil || n != want {
+			t.Fatalf("NextCounter = %d, %v; want %d", n, err, want)
+		}
+	}
+}
+
+func TestPurgeKeepsPendingAndRecent(t *testing.T) {
+	s := openTest(t)
+	ctx := context.Background()
+	old := time.Now().Add(-10 * 24 * time.Hour).UnixMilli()
+	defer func(f func() int64) { NowMs = f }(NowMs)
+	NowMs = func() int64 { return old }
+	for _, id := range []string{"old-sent", "old-pending", "old-ignored"} {
+		s.InsertInbox(ctx, "d", id, "message", 0, []byte(`{}`))
+	}
+	items, _ := s.NextNewInbox(ctx, 10)
+	for _, it := range items {
+		switch it.MessageID {
+		case "old-sent", "old-pending":
+			s.CompleteInbox(ctx, it, "processed", "", InboxMeta{}, nil, []NewOutbox{{RuleID: "r", Channel: "email", DestinationKey: "mail:" + it.MessageID, Action: rules.Action{Type: "email"}}})
+		default:
+			s.CompleteInbox(ctx, it, "ignored", "", InboxMeta{}, nil, nil)
+		}
+	}
+	job, _, _ := s.ClaimNextOutbox(ctx, "email")
+	if job.MessageID == "old-sent" {
+		s.MarkSent(ctx, job.ID, "SENT-OLD")
+	} else {
+		s.Reschedule(ctx, job.ID, time.Now(), "", true)
+		job, _, _ = s.ClaimNextOutbox(ctx, "email")
+		s.MarkSent(ctx, job.ID, "SENT-OLD")
+	}
+	NowMs = func() int64 { return time.Now().UnixMilli() }
+	s.InsertInbox(ctx, "d", "recent", "message", 0, []byte(`{}`))
+
+	pr, err := s.Purge(ctx, 5*24*time.Hour, 14*24*time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pr.Inbox != 2 || pr.Outbox != 1 {
+		t.Fatalf("purged inbox=%d outbox=%d, want 2 and 1", pr.Inbox, pr.Outbox)
+	}
+	acts, _ := s.Activity(ctx, ActivityFilter{})
+	left := map[string]bool{}
+	for _, a := range acts {
+		left[a.MessageID] = true
+	}
+	if !left["old-pending"] || !left["recent"] || len(left) != 2 {
+		t.Fatalf("unexpected rows left: %v", left)
+	}
+	// The loop-guard ID is still within its 14-day window.
+	if yes, _ := s.IsSentByUs(ctx, "SENT-OLD"); !yes {
+		t.Fatal("sent id purged too early")
+	}
+}

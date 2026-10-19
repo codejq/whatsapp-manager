@@ -601,18 +601,43 @@ func (s *Store) ChatName(ctx context.Context, jid string) string {
 
 // ---------- maintenance ----------
 
-// Purge deletes finished history older than the retention window.
-func (s *Store) Purge(ctx context.Context, olderThan time.Duration) error {
+// NextCounter atomically increments the integer setting `key` and returns
+// the new value (1 on first use).
+func (s *Store) NextCounter(ctx context.Context, key string) (int64, error) {
+	var n int64
+	err := s.DB.QueryRowContext(ctx, `INSERT INTO settings(key, value) VALUES(?, '1')
+		ON CONFLICT(key) DO UPDATE SET value = CAST(CAST(value AS INTEGER) + 1 AS TEXT)
+		RETURNING CAST(value AS INTEGER)`, key).Scan(&n)
+	return n, err
+}
+
+// PurgeResult counts what Purge removed.
+type PurgeResult struct {
+	Inbox, Outbox int64
+}
+
+// Purge deletes finished message history older than `olderThan`. Jobs still
+// waiting to be sent are never deleted, nor is the message they belong to.
+// The IDs of messages this app sent are kept for at least `sentIDsFor`,
+// because they guard against forwarding loops.
+func (s *Store) Purge(ctx context.Context, olderThan, sentIDsFor time.Duration) (PurgeResult, error) {
+	var pr PurgeResult
 	cut := time.Now().Add(-olderThan).UnixMilli()
-	stmts := []string{
-		`DELETE FROM outbox WHERE updated_at < ? AND status IN ('sent','failed','cancelled','uncertain')`,
-		`DELETE FROM inbox WHERE received_at < ? AND status <> 'new' AND id NOT IN (SELECT inbox_id FROM outbox)`,
-		`DELETE FROM sent_ids WHERE created_at < ?`,
+	if sentIDsFor < olderThan {
+		sentIDsFor = olderThan
 	}
-	for _, q := range stmts {
-		if _, err := s.DB.ExecContext(ctx, q, cut); err != nil {
-			return err
-		}
+	res, err := s.DB.ExecContext(ctx, `DELETE FROM outbox WHERE updated_at < ? AND status IN ('sent','failed','cancelled','uncertain')`, cut)
+	if err != nil {
+		return pr, err
 	}
-	return nil
+	pr.Outbox, _ = res.RowsAffected()
+	res, err = s.DB.ExecContext(ctx, `DELETE FROM inbox WHERE received_at < ? AND status <> 'new' AND id NOT IN (SELECT inbox_id FROM outbox)`, cut)
+	if err != nil {
+		return pr, err
+	}
+	pr.Inbox, _ = res.RowsAffected()
+	if _, err := s.DB.ExecContext(ctx, `DELETE FROM sent_ids WHERE created_at < ?`, time.Now().Add(-sentIDsFor).UnixMilli()); err != nil {
+		return pr, err
+	}
+	return pr, nil
 }

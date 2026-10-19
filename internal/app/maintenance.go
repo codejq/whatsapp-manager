@@ -30,7 +30,6 @@ func (a *App) maintenance(ctx context.Context) {
 }
 
 func (a *App) runMaintenance(ctx context.Context) {
-	g := a.General()
 	var last time.Time
 	_, _ = a.Store.GetJSON(ctx, keyLastBackup, &last)
 	if time.Since(last) > 24*time.Hour {
@@ -41,15 +40,30 @@ func (a *App) runMaintenance(ctx context.Context) {
 			a.Log.Info("backup written", "file", name)
 		}
 	}
-	if err := a.Store.Purge(ctx, time.Duration(g.RetentionDays)*24*time.Hour); err != nil {
-		a.Log.Error("purge failed", "err", err)
-	}
-	removeOlder(filepath.Join(a.gowaDir, "statics", "media"), time.Duration(g.MediaRetentionDays)*24*time.Hour)
-	removeOlder(filepath.Join(a.gowaDir, "statics", "qrcode"), 24*time.Hour)
-	removeOlder(filepath.Join(a.gowaDir, "statics", "senditems"), 24*time.Hour)
+	a.cleanup(ctx)
 	if a.Super != nil && a.Super.State().WA == "connected" {
 		_ = a.refreshChats(ctx)
 	}
+}
+
+// cleanup deletes messages, history and downloaded media older than the
+// cleanup period set in Settings.
+func (a *App) cleanup(ctx context.Context) {
+	g := a.General()
+	period := time.Duration(g.RetentionDays) * 24 * time.Hour
+	// Sent-message IDs (loop guard) must outlive the catch-up window.
+	sentIDs := time.Duration(g.CatchupHours)*time.Hour + 48*time.Hour
+	pr, err := a.Store.Purge(ctx, period, sentIDs)
+	if err != nil {
+		a.Log.Error("cleanup failed", "err", err)
+		return
+	}
+	if pr.Inbox > 0 || pr.Outbox > 0 {
+		a.Log.Info("cleanup removed old messages", "messages", pr.Inbox, "deliveries", pr.Outbox, "older_than_days", g.RetentionDays)
+	}
+	removeOlder(filepath.Join(a.gowaDir, "statics", "media"), period)
+	removeOlder(filepath.Join(a.gowaDir, "statics", "qrcode"), 24*time.Hour)
+	removeOlder(filepath.Join(a.gowaDir, "statics", "senditems"), 24*time.Hour)
 }
 
 func removeOlder(dir string, age time.Duration) {

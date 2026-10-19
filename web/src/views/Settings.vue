@@ -130,8 +130,9 @@ async function checkUpdate() {
               <p class="hint">{{ $t('settings.rate_text') }}</p>
             </div>
             <div>
-              <label class="label">{{ $t('settings.retention') }}</label>
+              <label class="label">{{ $t('settings.cleanup') }}</label>
               <input v-model.number="g.retention_days" type="number" min="1" max="365" class="input ltr" dir="ltr" @change="saveGeneral({})" />
+              <p class="hint">{{ $t('settings.cleanup_text') }}</p>
             </div>
           </div>
           <label v-if="app.channel === 'github' && !app.packaged" class="flex items-center gap-2 text-sm">
@@ -148,6 +149,13 @@ async function checkUpdate() {
         <!-- Email -->
         <div v-else-if="current === 'email'">
           <h2 class="section-title mb-4">{{ $t('smtp.title') }}</h2>
+          <div class="mb-6 flex items-start gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <Toggle :model-value="g.email_subject_counter" :label="$t('settings.subject_counter')" @update:model-value="saveGeneral({ email_subject_counter: $event })" />
+            <div>
+              <div class="font-semibold">{{ $t('settings.subject_counter') }}</div>
+              <div class="text-sm text-slate-500">{{ $t('settings.subject_counter_text') }}</div>
+            </div>
+          </div>
           <SmtpForm />
         </div>
 

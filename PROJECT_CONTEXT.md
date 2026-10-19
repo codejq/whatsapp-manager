@@ -65,7 +65,9 @@ messages that match user-defined rules** to WhatsApp contacts or groups, or to e
 7. Every user-facing string goes through i18n (`ar.json`, `en.json`).
 8. The SMTP password and other secrets are stored only DPAPI-encrypted. They are never logged, exported or
    returned by the UI API.
-9. SMTP auth failure pauses all email dispatch, and queued emails do not use up retries while it is paused.
+9. Cleanup (default 5 days) never deletes deliveries that are still pending or waiting. `sent_ids` are kept
+   for at least the catch-up window + 48 h.
+10. SMTP auth failure pauses all email dispatch, and queued emails do not use up retries while it is paused.
    Retries: network, timeout and 4xx are transient; auth and 5xx are permanent.
 
 ## Repo map & dev facts

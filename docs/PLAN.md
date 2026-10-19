@@ -268,8 +268,13 @@ no third-party email API.
   of crashing.
 - **Database**: WAL mode, `busy_timeout=5000`, a daily online backup, and `PRAGMA integrity_check` on start. If
   the database is corrupt, the app restores the latest backup and tells the user.
-- **Data retention**: inbox and outbox rows older than 30 days are purged nightly. GoWA `statics/media` older
-  than 7 days is purged as well, so the disk doesn't fill up.
+- **Cleanup period** (Settings → General, default **5 days**, 1–365): messages, activity history and GoWA
+  `statics/media` older than the period are deleted hourly, and right away when the period is changed.
+  Deliveries still waiting to be sent are never deleted. The sent-message IDs that guard against loops are
+  kept for at least the catch-up window plus 48 h.
+- **Email subject counter** (Settings → Email, on by default): each email subject gets a running number
+  (`[WhatsApp #42] …`) so Gmail and Outlook do not group separate forwards into one conversation. The
+  counter is persisted in `settings` (`email_subject_counter`) and incremented atomically.
 - **Logs**: rotating files plus an in-app "Activity" view that shows each message, which rule matched, and the
   delivery status. A "Copy diagnostics" button zips the logs and settings (without secrets) for support.
 - **Ports**: if a port is in use, the app picks another one and restarts GoWA with the new webhook URL.

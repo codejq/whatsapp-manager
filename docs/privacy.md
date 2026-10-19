@@ -6,8 +6,8 @@ WhatsApp Manager is a desktop app that runs entirely on your computer.
 
 **What the app processes.** To forward messages according to your rules, the app reads the WhatsApp
 messages your linked account receives. It also stores your rules and settings, a history of recent
-messages and deliveries (kept for 30 days by default), and the media files WhatsApp downloads (kept for 7
-days by default).
+messages and deliveries, and the media files WhatsApp downloads. History and media are deleted after 5 days
+by default; you can change this period in Settings.
 
 **Where data is stored.** Only on your PC, in `%LOCALAPPDATA%\WhatsAppManager`. Passwords and other secrets
 are encrypted with Windows' built-in data protection (DPAPI) for your Windows user account.
@@ -36,7 +36,7 @@ Questions: open an issue in the project's GitHub repository.
 يعمل WhatsApp Manager بالكامل على جهازك.
 
 - **ما يعالجه التطبيق:** رسائل واتساب التي يستقبلها حسابك المربوط، لتحويلها حسب قواعدك. ويحفظ أيضاً قواعدك
-  وإعداداتك وسجل الرسائل والتحويلات (30 يوماً افتراضياً) والوسائط المنزّلة (7 أيام افتراضياً).
+  وإعداداتك وسجل الرسائل والتحويلات والوسائط المنزّلة، وتُحذف بعد 5 أيام افتراضياً (يمكن تغيير المدة من الإعدادات).
 - **مكان الحفظ:** على جهازك فقط، في `%LOCALAPPDATA%\WhatsAppManager`. كلمات المرور مشفرة بحماية ويندوز (DPAPI).
 - **ما يخرج من جهازك:** اتصال واتساب، والرسائل والبريد اللذان ترسلهما قواعدك عبر حساب بريدك الخاص، والتحقق من
   الإصدارات الجديدة على GitHub (في نسخة GitHub فقط، ويمكن إيقافه).

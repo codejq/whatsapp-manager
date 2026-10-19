@@ -277,12 +277,13 @@ func (a *App) Start() error {
 			s, st := a.SMTPSettings(context.Background())
 			return s, st.State
 		},
-		OnAuthFail: a.onSMTPAuthFail,
-		GowaDir:    a.gowaDir,
-		Lang:       func() string { return a.General().Language },
-		WARate:     func() int { return a.General().WARatePerMin },
-		EmailRate:  func() int { return a.General().EmailRatePerMin },
-		Log:        a.Log.With("component", "dispatch"),
+		OnAuthFail:     a.onSMTPAuthFail,
+		GowaDir:        a.gowaDir,
+		Lang:           func() string { return a.General().Language },
+		WARate:         func() int { return a.General().WARatePerMin },
+		EmailRate:      func() int { return a.General().EmailRatePerMin },
+		SubjectCounter: func() bool { return a.General().EmailSubjectCounter },
+		Log:            a.Log.With("component", "dispatch"),
 	})
 
 	a.goSafe("supervisor", func() { a.Super.Run(ctx) })

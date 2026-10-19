@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -88,9 +89,10 @@ func newHarness(t *testing.T) *harness {
 			h.mu.Unlock()
 			return nil
 		},
-		WARate:    func() int { return 6000 },
-		EmailRate: func() int { return 6000 },
-		Log:       log,
+		WARate:         func() int { return 6000 },
+		SubjectCounter: func() bool { return true },
+		EmailRate:      func() int { return 6000 },
+		Log:            log,
 	})
 	h.hook = webhook.Handler(st, func() string { return h.secret }, h.eng.Notify, log)
 	return h
@@ -168,6 +170,9 @@ func TestEndToEndNoDuplicates(t *testing.T) {
 	}
 	if len(h.emails) != 1 {
 		t.Fatalf("emails = %d, want exactly 1", len(h.emails))
+	}
+	if !strings.HasPrefix(h.emails[0].Subject, "[WhatsApp #1] ") {
+		t.Fatalf("subject without counter: %q", h.emails[0].Subject)
 	}
 
 	// Loop guard: the message we sent comes back as an incoming event.

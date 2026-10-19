@@ -56,7 +56,10 @@ type Deps struct {
 	Lang        func() string
 	WARate      func() int // messages per minute
 	EmailRate   func() int
-	Log         *slog.Logger
+	// SubjectCounter reports whether email subjects get a running number
+	// (so Gmail does not group separate messages into one conversation).
+	SubjectCounter func() bool
+	Log            *slog.Logger
 	// SendEmail is overridable for tests.
 	SendEmail func(ctx context.Context, s mail.Settings, e mail.Email) error
 }
@@ -342,9 +345,15 @@ func (x *Dispatcher) BuildEmail(ctx context.Context, job store.OutboxItem, msg *
 			chat = rules.UserPart(msg.ChatID)
 		}
 	}
-	subject := fmt.Sprintf("[WhatsApp] %s — %s", chat, msg.SenderName)
+	tag := "[WhatsApp]"
+	if x.d.SubjectCounter != nil && x.d.SubjectCounter() {
+		if n, err := x.d.Store.NextCounter(ctx, "email_subject_counter"); err == nil {
+			tag = fmt.Sprintf("[WhatsApp #%d]", n)
+		}
+	}
+	subject := fmt.Sprintf("%s %s — %s", tag, chat, msg.SenderName)
 	if !msg.IsGroup() {
-		subject = fmt.Sprintf("[WhatsApp] %s", msg.SenderName)
+		subject = fmt.Sprintf("%s %s", tag, msg.SenderName)
 	}
 	ts := msg.Timestamp
 	if ts.IsZero() {

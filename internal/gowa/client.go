@@ -126,6 +126,15 @@ func (c *Client) Health(ctx context.Context) error {
 	return nil
 }
 
+// Version returns the running GoWA version (e.g. "v9.6.0").
+func (c *Client) Version(ctx context.Context) (string, error) {
+	var r struct {
+		Version string `json:"version"`
+	}
+	err := c.getJSON(ctx, "/app/info", &r)
+	return r.Version, err
+}
+
 // EnsureDevice creates the "main" device slot if it does not exist.
 func (c *Client) EnsureDevice(ctx context.Context) error {
 	err := c.postJSON(ctx, "/devices", map[string]string{"device_id": DeviceID}, nil)

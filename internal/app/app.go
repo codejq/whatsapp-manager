@@ -97,6 +97,7 @@ type App struct {
 	gowaDir  string
 	cancel   context.CancelFunc
 	wg       sync.WaitGroup
+	gu       *gowaUpdater
 	waSince  time.Time
 	lastWA   string
 	warnedDC bool
@@ -240,6 +241,7 @@ func (a *App) Start() error {
 	}
 
 	a.Engine = engine.New(a.Store, a.engineOptions, a.Log, func() { a.Dispatcher.Wake() })
+	gowaExe := a.initGowaUpdater(ctx)
 
 	if err := a.startServer(ctx); err != nil {
 		return err
@@ -248,7 +250,9 @@ func (a *App) Start() error {
 
 	gowaLog := &lumberjack.Logger{Filename: filepath.Join(a.logDir, "gowa.log"), MaxSize: 10, MaxBackups: 3}
 	a.Super = gowa.NewSupervisor(gowa.Config{
-		ExePath:       a.cfg.GowaExe,
+		ExePath:       gowaExe,
+		FallbackExe:   a.cfg.GowaExe,
+		OnFallback:    a.onGowaFallback,
 		WorkDir:       a.gowaDir,
 		Port:          a.runtime.GowaPort,
 		User:          a.runtime.GowaUser,
@@ -391,6 +395,9 @@ func (a *App) onGowaState(st gowa.State) {
 	}
 	a.mu.Unlock()
 	a.Log.Info("whatsapp state", "phase", st.Phase, "wa", st.WA)
+	if st.Phase == gowa.PhaseRunning && st.WA == gowa.WAUnknown {
+		go a.refreshGowaVersion(context.Background())
+	}
 	if st.WA == gowa.WAConnected && prev != gowa.WAConnected {
 		go a.refreshChats(context.Background())
 		a.Dispatcher.Wake()
@@ -469,12 +476,14 @@ var toastText = map[string]map[string][2]string{
 		"toast.disconnected":     {"واتساب غير متصل", "انقطع الاتصال منذ 5 دقائق. تحقق من الإنترنت أو من هاتفك."},
 		"toast.smtp_auth_failed": {"فشل تسجيل الدخول للبريد", "تحقق من إعدادات البريد. الرسائل محفوظة وستُرسل بعد الإصلاح."},
 		"toast.still_running":    {"WhatsApp Manager ما زال يعمل", "التطبيق يعمل في شريط المهام. للإغلاق اختر «خروج» من أيقونة الشريط."},
+		"toast.gowa_update":      {"تحديث جديد لخدمة واتساب", "يتوفر إصدار جديد من خدمة واتساب. افتح الإعدادات ← واتساب لتنزيله."},
 	},
 	"en": {
 		"toast.logged_out":       {"WhatsApp logged out", "Open WhatsApp Manager and scan the QR code to reconnect."},
 		"toast.disconnected":     {"WhatsApp disconnected", "Offline for 5 minutes. Check the internet connection or your phone."},
 		"toast.smtp_auth_failed": {"Email login failed", "Check the email settings. Messages are kept and will be sent once fixed."},
 		"toast.still_running":    {"WhatsApp Manager is still running", "It keeps working in the system tray. Use Quit in the tray menu to exit."},
+		"toast.gowa_update":      {"WhatsApp service update", "A new version of the WhatsApp service is available. Open Settings → WhatsApp to download it."},
 	},
 }
 

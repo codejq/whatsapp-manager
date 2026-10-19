@@ -21,6 +21,7 @@ import (
 	"whatsapp-manager/internal/gowa"
 	"whatsapp-manager/internal/mail"
 	"whatsapp-manager/internal/rules"
+	"whatsapp-manager/internal/semver"
 	"whatsapp-manager/internal/store"
 	"whatsapp-manager/internal/ui"
 )
@@ -165,6 +166,7 @@ func (a *App) registerAPI(mux *http.ServeMux) {
 		writeJSON(w, 200, map[string]bool{"ok": true})
 	})
 	mux.HandleFunc("GET /api/update", a.apiUpdate)
+	a.registerGowaAPI(mux)
 
 	// Single-page app.
 	sub, err := fs.Sub(ui.FS, "dist")
@@ -221,6 +223,7 @@ func (a *App) apiState(w http.ResponseWriter, r *http.Request) {
 		"notices":   notices,
 		"autostart": a.cfg.Platform.AutostartEnabled(),
 		"rules":     map[string]int{"total": len(rulesList), "enabled": enabled},
+		"gowa":      a.GowaStatus(),
 	})
 }
 
@@ -729,36 +732,4 @@ func (a *App) apiUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewerVersion reports whether semver tag a is newer than b ("v1.2.3").
-func NewerVersion(a, b string) bool {
-	pa, oka := parseSemver(a)
-	pb, okb := parseSemver(b)
-	if !oka || !okb {
-		return false
-	}
-	for i := 0; i < 3; i++ {
-		if pa[i] != pb[i] {
-			return pa[i] > pb[i]
-		}
-	}
-	return false
-}
-
-func parseSemver(v string) ([3]int, bool) {
-	var out [3]int
-	v = strings.TrimPrefix(strings.TrimSpace(v), "v")
-	if i := strings.IndexAny(v, "-+"); i >= 0 {
-		v = v[:i]
-	}
-	parts := strings.Split(v, ".")
-	if len(parts) != 3 {
-		return out, false
-	}
-	for i, p := range parts {
-		n, err := strconv.Atoi(p)
-		if err != nil {
-			return out, false
-		}
-		out[i] = n
-	}
-	return out, true
-}
+func NewerVersion(a, b string) bool { return semver.Newer(a, b) }

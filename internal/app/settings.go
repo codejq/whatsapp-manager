@@ -35,12 +35,13 @@ type General struct {
 	RetentionDays       int    `json:"retention_days"` // messages, history and media older than this are deleted
 	EmailSubjectCounter bool   `json:"email_subject_counter"`
 	UpdateCheck         bool   `json:"update_check"`
+	GowaUpdateCheck     bool   `json:"gowa_update_check"` // daily check for a newer WhatsApp service (GoWA)
 }
 
 func defaultGeneral() General {
 	return General{
 		Language: "ar", Theme: "system", Autostart: true, CatchupHours: 12,
-		WARatePerMin: 20, EmailRatePerMin: 30, RetentionDays: 5, EmailSubjectCounter: true, UpdateCheck: true,
+		WARatePerMin: 20, EmailRatePerMin: 30, RetentionDays: 5, EmailSubjectCounter: true, UpdateCheck: true, GowaUpdateCheck: true,
 	}
 }
 

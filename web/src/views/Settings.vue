@@ -10,6 +10,7 @@ import Icon from '../components/Icon.vue'
 import Toggle from '../components/Toggle.vue'
 import WhatsAppLink from '../components/WhatsAppLink.vue'
 import SmtpForm from '../components/SmtpForm.vue'
+import GowaService from '../components/GowaService.vue'
 import { PUBLISHER, openExternal } from '../branding'
 
 const props = defineProps({ tab: { type: String, default: '' } })
@@ -145,6 +146,7 @@ async function checkUpdate() {
         <div v-else-if="current === 'whatsapp'">
           <h2 class="section-title mb-4">{{ $t('wa.title') }}</h2>
           <WhatsAppLink />
+          <GowaService class="mt-6" />
         </div>
 
         <!-- Email -->

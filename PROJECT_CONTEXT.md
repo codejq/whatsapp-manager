@@ -55,6 +55,19 @@ messages that match user-defined rules** to WhatsApp contacts or groups, or to e
 - `GET /user/my/groups` returns at most 500 groups (a WhatsApp limit).
 - Docs: `docs/openapi.yaml` and `docs/webhook-payload.md` in the GoWA repo.
 
+## GoWA updates (in-app)
+
+- The GitHub build checks `aldinokemal/go-whatsapp-web-multidevice` releases/latest once a day (Settings → WhatsApp,
+  on by default). It offers only **same-major** versions; major upgrades need a new app release.
+- Install: download `whatsapp_<ver>_windows_amd64.zip` and verify its SHA-256 against the release's `checksums.txt`,
+  extract to `<data>\gowa-bin\<version>\whatsapp.exe`, wait for no WhatsApp send in flight, restart GoWA,
+  and confirm `/app/info` reports the new version within 90 s. Otherwise roll back and mark the version
+  bad (`gowa_bad`). The version in use is stored in `gowa_override`.
+- The supervisor falls back to the bundled exe if the current one fails to start 3 times in a row
+  (`FallbackExe`), and adds the notice `notice.gowa_rolled_back`.
+- Disabled in the Store/MSIX build (Store policy forbids downloading executables).
+- Dev runs with `--data-dir` use their own single-instance lock, so they can run beside the real app.
+
 ## Invariants (do not break)
 
 1. **No duplicate deliveries**: `inbox UNIQUE(device_id, message_id, event)` and

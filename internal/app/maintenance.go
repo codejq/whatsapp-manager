@@ -41,6 +41,7 @@ func (a *App) runMaintenance(ctx context.Context) {
 		}
 	}
 	a.cleanup(ctx)
+	a.autoCheckGowa(ctx)
 	if a.Super != nil && a.Super.State().WA == "connected" {
 		_ = a.refreshChats(ctx)
 	}

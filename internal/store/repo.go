@@ -427,6 +427,13 @@ func (s *Store) GetOutbox(ctx context.Context, id int64) (OutboxItem, error) {
 	return scanOutbox(rows)
 }
 
+// CountSending returns how many jobs of a channel are being sent right now.
+func (s *Store) CountSending(ctx context.Context, channel string) (int, error) {
+	var n int
+	err := s.DB.QueryRowContext(ctx, `SELECT COUNT(1) FROM outbox WHERE status='sending' AND channel=?`, channel).Scan(&n)
+	return n, err
+}
+
 // IsSentByUs reports whether a message id was sent by this app.
 func (s *Store) IsSentByUs(ctx context.Context, messageID string) (bool, error) {
 	var n int

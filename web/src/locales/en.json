@@ -59,11 +59,14 @@
     "disconnected": "WhatsApp is reconnecting. Messages will be forwarded when it is back.",
     "update": "Version {v} is available.",
     "download": "Download",
-    "app_unreachable": "Cannot reach the app service. It may be restarting."
+    "app_unreachable": "Cannot reach the app service. It may be restarting.",
+    "gowa_update": "A new version of the WhatsApp service ({v}) is available.",
+    "gowa_open": "View update"
   },
   "notice": {
     "db_restored": "The settings database was damaged and was restored from the latest backup.",
-    "uncertain_jobs": "The app was closed while sending. Some messages may not have been delivered — check Activity for items marked “Unknown”."
+    "uncertain_jobs": "The app was closed while sending. Some messages may not have been delivered — check Activity for items marked “Unknown”.",
+    "gowa_rolled_back": "The updated WhatsApp service did not start, so the app went back to the previous version."
   },
   "dashboard": {
     "title": "Home",
@@ -449,7 +452,13 @@
       "unknown": "The mail server returned an error.",
       "autodetect_failed": "Could not find the settings automatically. Choose your provider or enter the server manually.",
       "not_ready": "Waiting for email setup"
-    }
+    },
+    "gowa_update_failed": "The new version did not start. The previous version was restored.",
+    "gowa_download_failed": "Download failed or the file could not be verified. Nothing was changed.",
+    "gowa_check_failed": "Could not check for updates. Check the internet connection.",
+    "gowa_update_busy": "An update is already in progress.",
+    "gowa_update_none": "No update is available.",
+    "gowa_update_not_allowed": "Updates are managed by the Microsoft Store."
   },
   "ad": {
     "label": "Sponsored",
@@ -462,5 +471,24 @@
     "website": "Website",
     "phone": "Phone",
     "email": "Email"
+  },
+  "gowa": {
+    "title": "WhatsApp service (GoWA)",
+    "installed": "Installed version",
+    "latest": "Latest version",
+    "bundled": "included with the app",
+    "notes": "What’s new",
+    "downloading": "Downloading… {p}%",
+    "installing": "Installing and restarting the service…",
+    "done": "Updated to {v}.",
+    "major": "Version {v} is a major update that may not work with this version of WhatsApp Manager. Update WhatsApp Manager to get it.",
+    "up_to_date": "You have the latest version.",
+    "install": "Download and install {v}",
+    "check": "Check now",
+    "reset": "Use the included version",
+    "checked": "Checked {t}",
+    "note": "The download is verified before use. WhatsApp stays linked; the service restarts for a few seconds. If the new version does not start, the previous one is restored automatically.",
+    "auto": "Check for updates automatically (daily)",
+    "store": "Updates to the WhatsApp service come with app updates from the Microsoft Store."
   }
 }

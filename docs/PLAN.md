@@ -431,6 +431,14 @@ packaged and unpackaged builds. The app never writes next to its own exe.
   clear the app is not affiliated with WhatsApp or Meta.
 - Run the Windows App Certification Kit (WACK) in CI on the MSIX.
 
+## 13.5 GoWA updates
+
+The GitHub build checks for newer GoWA releases daily. It offers same-major versions in Settings → WhatsApp
+and in a banner. Installing verifies the SHA-256 from the release's `checksums.txt`, restarts GoWA on the new
+binary (the WhatsApp session is kept, because GoWA's working directory does not change), and rolls back
+automatically if it does not start. Major versions are not installed, because they may break the REST or
+webhook contract. The feature is off in the Store build.
+
 ## 14. Implementation status (2026-10-19)
 
 | Milestone | Status | Notes |

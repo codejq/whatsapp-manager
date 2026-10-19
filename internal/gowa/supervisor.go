@@ -57,6 +57,11 @@ type Config struct {
 	Assign func(pid int) error
 	// OnPortChange persists a new port when the old one is taken.
 	OnPortChange func(port int)
+	// FallbackExe is used when ExePath fails to start 3 times in a row
+	// (e.g. a downloaded GoWA update that does not work). OnFallback is told
+	// which exe was abandoned.
+	FallbackExe string
+	OnFallback  func(badExe string)
 }
 
 // Supervisor runs and watches GoWA.
@@ -70,6 +75,9 @@ type Supervisor struct {
 	kick     chan struct{}
 	restart  chan struct{}
 	lastWAOK time.Time
+
+	exe        string // current GoWA binary (guarded by mu)
+	reachedRun bool   // the last runOnce got as far as a healthy server
 }
 
 // NewSupervisor creates a supervisor; call Run to start.
@@ -84,7 +92,22 @@ func NewSupervisor(cfg Config) *Supervisor {
 		restart: make(chan struct{}, 1),
 	}
 	s.client = NewClient(cfg.Port, cfg.User, cfg.Pass)
+	s.exe = cfg.ExePath
 	return s
+}
+
+// Exe returns the GoWA binary currently in use.
+func (s *Supervisor) Exe() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.exe
+}
+
+// SetExe switches the GoWA binary; it takes effect on the next (re)start.
+func (s *Supervisor) SetExe(path string) {
+	s.mu.Lock()
+	s.exe = path
+	s.mu.Unlock()
 }
 
 // Client returns the current REST client.
@@ -145,10 +168,21 @@ func (s *Supervisor) update(fn func(*State)) {
 // Run supervises GoWA until ctx is cancelled.
 func (s *Supervisor) Run(ctx context.Context) {
 	backoff := time.Second
+	startFails := 0
 	for ctx.Err() == nil {
-		if _, err := os.Stat(s.cfg.ExePath); err != nil {
+		if fb := s.cfg.FallbackExe; fb != "" && s.Exe() != fb {
+			if _, err := os.Stat(s.Exe()); err != nil {
+				s.cfg.Logger.Warn("gowa binary missing; using bundled", "path", s.Exe())
+				bad := s.Exe()
+				s.SetExe(fb)
+				if s.cfg.OnFallback != nil {
+					s.cfg.OnFallback(bad)
+				}
+			}
+		}
+		if _, err := os.Stat(s.Exe()); err != nil {
 			s.update(func(st *State) { st.Phase = PhaseError; st.LastError = "errors.gowa_missing" })
-			s.cfg.Logger.Error("gowa binary missing", "path", s.cfg.ExePath)
+			s.cfg.Logger.Error("gowa binary missing", "path", s.Exe())
 			if !sleepCtx(ctx, 30*time.Second) {
 				return
 			}
@@ -163,6 +197,20 @@ func (s *Supervisor) Run(ctx context.Context) {
 		}
 		if time.Since(started) > 5*time.Minute {
 			backoff = time.Second
+		}
+		if s.reachedRun {
+			startFails = 0
+		} else {
+			startFails++
+		}
+		if startFails >= 3 && s.cfg.FallbackExe != "" && s.Exe() != s.cfg.FallbackExe {
+			bad := s.Exe()
+			s.cfg.Logger.Error("gowa failed to start 3 times; falling back to bundled version", "bad", bad)
+			s.SetExe(s.cfg.FallbackExe)
+			startFails, backoff = 0, time.Second
+			if s.cfg.OnFallback != nil {
+				s.cfg.OnFallback(bad)
+			}
 		}
 		s.cfg.Logger.Warn("gowa exited; restarting", "err", err, "backoff", backoff)
 		s.update(func(st *State) {
@@ -224,9 +272,10 @@ func (s *Supervisor) runOnce(ctx context.Context) error {
 	if err := os.MkdirAll(s.cfg.WorkDir, 0o700); err != nil {
 		return err
 	}
+	s.reachedRun = false
 	pctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	cmd := exec.CommandContext(pctx, s.cfg.ExePath, s.args()...)
+	cmd := exec.CommandContext(pctx, s.Exe(), s.args()...)
 	cmd.Dir = s.cfg.WorkDir
 	if s.cfg.Log != nil {
 		cmd.Stdout = s.cfg.Log
@@ -271,6 +320,7 @@ func (s *Supervisor) runOnce(ctx context.Context) error {
 			return errors.New("health check timeout")
 		}
 	}
+	s.reachedRun = true
 	if err := client.EnsureDevice(ctx); err != nil {
 		s.cfg.Logger.Warn("ensure device failed", "err", err)
 	}

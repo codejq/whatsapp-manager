@@ -5,11 +5,14 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"whatsapp-manager/internal/app"
@@ -60,7 +63,12 @@ func main() {
 		}
 	}()
 
-	first, err := winx.AcquireSingleInstance()
+	scope := ""
+	if *dataDirFlag != "" {
+		h := sha256.Sum256([]byte(strings.ToLower(filepath.Clean(dataDir))))
+		scope = hex.EncodeToString(h[:8])
+	}
+	first, err := winx.AcquireSingleInstance(scope)
 	if err != nil {
 		fatal("Startup failed", err)
 	}

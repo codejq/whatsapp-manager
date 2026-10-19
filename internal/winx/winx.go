@@ -151,9 +151,13 @@ func SetAutostart(enable bool) error {
 // ---------- single instance ----------
 
 // AcquireSingleInstance creates a per-user named mutex. It returns false if
-// another instance already holds it.
-func AcquireSingleInstance() (bool, error) {
+// another instance already holds it. scope separates instances that use a
+// different data folder (dev/test runs); "" is the normal install.
+func AcquireSingleInstance(scope string) (bool, error) {
 	name := `Local\` + AppName + `-SingleInstance`
+	if scope != "" {
+		name += "-" + scope
+	}
 	p, _ := windows.UTF16PtrFromString(name)
 	h, err := windows.CreateMutex(nil, false, p)
 	if errors.Is(err, windows.ERROR_ALREADY_EXISTS) {

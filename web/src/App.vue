@@ -111,6 +111,10 @@ const showChrome = computed(() => route.path !== '/welcome')
         <div v-if="app.wa.wa === 'disconnected'" class="flex items-center gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-900/30 dark:text-amber-100">
           <Icon name="refresh" :size="18" class="animate-spin" />{{ $t('banner.disconnected') }}
         </div>
+        <div v-if="app.gowa && app.gowa.available && app.gowa.compatible && app.gowa.state === 'idle' && route.path !== '/settings/whatsapp'" class="flex items-center gap-3 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900 dark:bg-brand-900/30 dark:text-brand-100">
+          <Icon name="zap" :size="18" />{{ $t('banner.gowa_update', { v: app.gowa.latest }) }}
+          <router-link to="/settings/whatsapp" class="btn-primary btn-sm ms-auto">{{ $t('banner.gowa_open') }}</router-link>
+        </div>
         <div v-for="n in app.notices" :key="n" class="flex items-center gap-3 rounded-xl bg-slate-100 px-4 py-3 text-sm dark:bg-slate-800">
           <Icon name="info" :size="18" />{{ $t(n) }}
           <button class="btn-ghost btn-sm ms-auto" @click="dismissNotices"><Icon name="x" :size="14" /></button>

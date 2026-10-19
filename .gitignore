@@ -3,7 +3,8 @@
 /bin/
 *.exe
 /build/gowa/
-/internal/api/dist/
+/internal/ui/dist/*
+!/internal/ui/dist/.gitkeep
 
 # Runtime data
 *.db
@@ -26,3 +27,4 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+/cmd/whatsapp-manager/rsrc_windows_*.syso

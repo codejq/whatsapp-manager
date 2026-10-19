@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -85,7 +86,7 @@ func blob(b []byte) *windows.DataBlob {
 // ---------- packaging ----------
 
 var (
-	modkernel32                  = windows.NewLazySystemDLL("kernel32.dll")
+	modkernel32                   = windows.NewLazySystemDLL("kernel32.dll")
 	procGetCurrentPackageFullName = modkernel32.NewProc("GetCurrentPackageFullName")
 )
 
@@ -98,6 +99,14 @@ func IsPackaged() bool {
 	r, _, _ := procGetCurrentPackageFullName.Call(uintptr(unsafe.Pointer(&n)), 0)
 	const appmodelErrorNoPackage = 15700
 	return r != appmodelErrorNoPackage
+}
+
+var procGetTickCount64 = modkernel32.NewProc("GetTickCount64")
+
+// Uptime returns the time since Windows started.
+func Uptime() time.Duration {
+	r, _, _ := procGetTickCount64.Call()
+	return time.Duration(r) * time.Millisecond
 }
 
 // ---------- autostart ----------

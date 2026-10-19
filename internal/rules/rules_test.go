@@ -7,13 +7,13 @@ import (
 
 func TestNormalizeText(t *testing.T) {
 	cases := map[string]string{
-		"عَاجِل":      "عاجل",
-		"عـــاجل":     "عاجل",
-		"أحمد":        "احمد",
-		"إلى":         "الي",
-		"مدرسة":       "مدرسه",
-		"URGENT":      "urgent",
-		"١٢٣":         "123",
+		"عَاجِل":    "عاجل",
+		"عـــاجل":   "عاجل",
+		"أحمد":      "احمد",
+		"إلى":       "الي",
+		"مدرسة":     "مدرسه",
+		"URGENT":    "urgent",
+		"١٢٣":       "123",
 		"Ｆｕｌｌｗｉｄｔｈ": "fullwidth",
 	}
 	for in, want := range cases {

@@ -63,8 +63,8 @@ type Deps struct {
 
 // Dispatcher runs the WhatsApp and email workers.
 type Dispatcher struct {
-	d       Deps
-	wakeWA  chan struct{}
+	d        Deps
+	wakeWA   chan struct{}
 	wakeMail chan struct{}
 }
 

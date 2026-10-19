@@ -1,0 +1,6 @@
+# Pinned GoWA release bundled with the app.
+# Update: change VERSION, then copy the SHA256 for the windows_amd64 zip from the release's checksums.txt.
+VERSION=9.6.0
+ASSET=whatsapp_9.6.0_windows_amd64.zip
+SHA256=9db29f358b63dbc959b774ff0423c6547390ade3591aedbf4477ea7e8dfdba5e
+URL=https://github.com/aldinokemal/go-whatsapp-web-multidevice/releases/download/v9.6.0/whatsapp_9.6.0_windows_amd64.zip

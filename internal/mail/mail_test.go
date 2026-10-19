@@ -35,11 +35,11 @@ func TestValidate(t *testing.T) {
 
 func TestClassify(t *testing.T) {
 	cases := map[string]string{
-		"535 5.7.8 Username and Password not accepted": KindAuth,
-		"x509: certificate signed by unknown authority": KindTLS,
-		"550 5.1.1 mailbox unavailable":                 KindRecipient,
+		"535 5.7.8 Username and Password not accepted":        KindAuth,
+		"x509: certificate signed by unknown authority":       KindTLS,
+		"550 5.1.1 mailbox unavailable":                       KindRecipient,
 		"dial tcp: lookup smtp.nowhere.invalid: no such host": KindNetwork,
-		"421 4.7.0 Try again later":                     KindTemporary,
+		"421 4.7.0 Try again later":                           KindTemporary,
 	}
 	for msg, kind := range cases {
 		var me *Error

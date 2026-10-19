@@ -201,11 +201,11 @@ type InboxMeta struct {
 
 // NewOutbox is an outbox row to create.
 type NewOutbox struct {
-	RuleID, RuleName  string
-	Channel           string
-	DestinationKey    string
-	DestinationLabel  string
-	Action            rules.Action
+	RuleID, RuleName string
+	Channel          string
+	DestinationKey   string
+	DestinationLabel string
+	Action           rules.Action
 }
 
 // ProcessResult reports what CompleteInbox did.

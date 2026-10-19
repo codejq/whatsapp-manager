@@ -43,7 +43,9 @@ func (f *fakeWA) record(to, kind string) (string, error) {
 	f.sent = append(f.sent, to+"|"+kind+"|"+id)
 	return id, nil
 }
-func (f *fakeWA) Forward(_ context.Context, _, to string) (string, error) { return f.record(to, "forward") }
+func (f *fakeWA) Forward(_ context.Context, _, to string) (string, error) {
+	return f.record(to, "forward")
+}
 func (f *fakeWA) SendText(_ context.Context, to, _ string) (string, error) {
 	return f.record(to, "text")
 }

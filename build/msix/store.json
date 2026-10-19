@@ -1,0 +1,9 @@
+{
+  "_comment": "Microsoft Store identity for the MSIX build (Partner Center > whats-manager > Product identity). Not secret: it is visible in every installed package. Override locally with store.local.json or with MSIX_* environment variables.",
+  "identityName": "QuantumBillingLLC.whats-manager",
+  "publisher": "CN=F264E267-270B-4924-96EC-4FDE3E479CF8",
+  "publisherDisplayName": "Quantum Billing LLC",
+  "displayName": "whats-manager",
+  "storeId": "9PNPC9GBHQPQ",
+  "packageFamilyName": "QuantumBillingLLC.whats-manager_nfsdg9vz0b2m8"
+}

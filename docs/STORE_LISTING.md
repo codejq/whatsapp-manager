@@ -34,7 +34,13 @@ Names to try (first available wins). The name must be unique in the Store:
 
 Reserve the English name, then add the Arabic name as a second reserved name for the Arabic listing.
 
-## 3. Build the package with your identity
+## 3. Build the package
+
+The identity is already in `build/msix/store.json`, so just run
+`./build.ps1 -Version 0.1.0 -Channel store -Msix`. The steps below are only needed for a different
+Partner Center product.
+
+### Identity for another product
 
 1. Partner Center → your app → **Product management → Product identity**. Copy:
    - `Package/Identity/Name`
@@ -232,10 +238,40 @@ Submit. Certification usually takes 1–3 business days.
 
 ---
 
-## 7. Later versions (automatic)
+## 7. Automatic publishing with GitHub Actions
 
-After the first submission is approved, set up automatic submissions as described in
-[RELEASING.md](RELEASING.md#microsoft-store-msix) (an Entra ID app plus secrets in the `store`
-environment). Also set these repository **variables**: `STORE_ENABLED` = `true` and `MSIX_DISPLAY_NAME` =
-your reserved name. Each stable GitHub release then submits a new package by itself. To submit by hand
-instead, rebuild with the next version number and upload the package to a new submission.
+The product identity is committed in `build/msix/store.json` (Store ID **9PNPC9GBHQPQ**,
+https://apps.microsoft.com/detail/9PNPC9GBHQPQ). After the first submission is published,
+`.github/workflows/store.yml` submits every new stable release by itself.
+
+**One-time setup:**
+
+1. **First submission by hand.** The Store API only works once the app has a completed submission. Upload
+   `dist\WhatsAppManager-0.1.0.0.msix` (built with `./build.ps1 -Version 0.1.0 -Channel store -Msix`),
+   complete the other sections and submit.
+2. **Create an API identity.** In Partner Center, go to ⚙ **Account settings → User management →
+   Microsoft Entra applications → + Create Microsoft Entra application** (or add an existing one).
+   - Role: **Manager**.
+   - Open the app, then **Add new key**. Copy the **Key** (the client secret, shown once), the
+     **Client ID** and the **Tenant ID**.
+3. **Find your Seller ID** under ⚙ **Account settings → Legal info / Organization profile → Seller ID**.
+4. **Add the values to GitHub:** repository **Settings → Environments → New environment** named
+   `store`. Add these **environment secrets**:
+
+   | Secret | Value |
+   |---|---|
+   | `STORE_TENANT_ID` | Tenant ID |
+   | `STORE_SELLER_ID` | Seller ID |
+   | `STORE_CLIENT_ID` | Client ID |
+   | `STORE_CLIENT_SECRET` | Key (client secret) |
+
+5. **Turn it on:** **Settings → Secrets and variables → Actions → Variables → New repository variable**
+   `STORE_ENABLED` = `true`.
+
+**Releasing after that:** push a tag such as `v0.1.1`. The **Release** workflow publishes the GitHub
+release, then **Microsoft Store** builds `0.1.1.0` and creates a Store submission with it. The submission
+keeps the existing listing, screenshots and settings, and Microsoft certifies it as usual. You can also run
+**Actions → Microsoft Store → Run workflow** with a version number.
+
+Each Store version must be higher than the previous one. The client secret expires (1–2 years); renew
+it in Partner Center and update `STORE_CLIENT_SECRET`.

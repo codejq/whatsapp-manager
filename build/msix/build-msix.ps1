@@ -32,13 +32,15 @@ function Find-SdkTool($name) {
     throw "$name not found. Install the Windows 10/11 SDK (winget install Microsoft.WindowsSDK.10.0.26100)."
 }
 
-# Partner Center identity: environment variables (CI) or build/msix/store.local.json
-# (local builds; gitignored; copy store.local.example.json). Dev placeholders otherwise.
+# Partner Center identity.
+# Order: environment variables > store.local.json (gitignored) > store.json (committed).
 $local = @{}
-$localFile = Join-Path $here 'store.local.json'
-if (Test-Path $localFile) {
-    (Get-Content $localFile -Raw | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $local[$_.Name] = $_.Value }
-    Write-Host "Using Store identity from $localFile"
+foreach ($name in @('store.json', 'store.local.json')) {
+    $f = Join-Path $here $name
+    if (Test-Path $f) {
+        (Get-Content $f -Raw | ConvertFrom-Json).PSObject.Properties | ForEach-Object { if ($_.Value) { $local[$_.Name] = $_.Value } }
+        Write-Host "Store identity: $name"
+    }
 }
 function Pick($envName, $key, $default) {
     $v = [Environment]::GetEnvironmentVariable($envName)

@@ -1,8 +1,15 @@
 name: Microsoft Store
 
-# Builds the MSIX and submits it to Partner Center after each stable
-# release, or manually. Needs the "store" environment secrets listed in
-# docs/RELEASING.md; until they exist the job is skipped.
+# Builds the MSIX and submits it to the Microsoft Store (product
+# "whats-manager", Store ID in build/msix/store.json).
+#
+# Runs automatically after every stable GitHub release (tag vX.Y.Z), or
+# manually from the Actions tab. Requirements (see docs/STORE_LISTING.md):
+#   - the first submission was made by hand in Partner Center;
+#   - repository variable STORE_ENABLED = true;
+#   - secrets in the "store" environment: STORE_TENANT_ID, STORE_SELLER_ID,
+#     STORE_CLIENT_ID, STORE_CLIENT_SECRET (a Microsoft Entra app added to
+#     Partner Center with the Manager role).
 on:
   workflow_run:
     workflows: [Release]
@@ -10,11 +17,15 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish, without "v" (e.g. 1.2.0)'
+        description: 'Version to publish, without "v" (must be higher than the last Store version, e.g. 0.1.1)'
         required: true
 
 permissions:
   contents: read
+
+concurrency:
+  group: store
+  cancel-in-progress: false
 
 jobs:
   store:
@@ -53,13 +64,15 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      - name: Build MSIX
-        env:
-          MSIX_IDENTITY_NAME: ${{ secrets.MSIX_IDENTITY_NAME }}
-          MSIX_PUBLISHER: ${{ secrets.MSIX_PUBLISHER }}
-          MSIX_PUBLISHER_DISPLAY: ${{ secrets.MSIX_PUBLISHER_DISPLAY }}
-          MSIX_DISPLAY_NAME: ${{ vars.MSIX_DISPLAY_NAME }}
+      - name: Build MSIX (identity from build/msix/store.json)
         run: ./build.ps1 -Version "${{ steps.v.outputs.version }}" -Channel store -Msix -SkipTests
+
+      - name: Read Store ID
+        id: store
+        shell: pwsh
+        run: |
+          $cfg = Get-Content build/msix/store.json -Raw | ConvertFrom-Json
+          "id=$($cfg.storeId)" >> $env:GITHUB_OUTPUT
 
       - uses: microsoft/setup-msstore-cli@v1
 
@@ -69,8 +82,10 @@ jobs:
           STORE_SELLER_ID: ${{ secrets.STORE_SELLER_ID }}
           STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
           STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
-          STORE_PRODUCT_ID: ${{ secrets.STORE_PRODUCT_ID }}
+          STORE_ID: ${{ steps.store.outputs.id }}
         run: |
           msstore reconfigure --tenantId $env:STORE_TENANT_ID --sellerId $env:STORE_SELLER_ID --clientId $env:STORE_CLIENT_ID --clientSecret $env:STORE_CLIENT_SECRET
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $msix = Get-ChildItem dist -Filter *.msix | Select-Object -First 1
-          msstore publish $msix.FullName -id $env:STORE_PRODUCT_ID
+          msstore publish $msix.FullName -id $env:STORE_ID
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

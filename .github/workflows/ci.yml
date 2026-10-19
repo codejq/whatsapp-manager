@@ -60,7 +60,7 @@ jobs:
 
       # Artifacts count against the account's Actions storage, so they are
       # only kept when requested on a manual run.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload }}
         with:
           name: whatsapp-manager-ci-${{ github.sha }}

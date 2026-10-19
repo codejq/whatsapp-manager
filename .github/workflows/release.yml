@@ -47,7 +47,7 @@ jobs:
       - name: Upload unsigned files for signing
         id: unsigned
         if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unsigned
           path: dist/*.exe

@@ -29,3 +29,6 @@ Thumbs.db
 .idea/
 /cmd/whatsapp-manager/rsrc_windows_*.syso
 /build/msix/store.local.json
+
+/store-listing/
+/Store listing *.csv

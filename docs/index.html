@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/png" href="img/app-icon.png">
 <title>WhatsApp Manager</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="WhatsApp Manager — حوّل رسائل واتساب المهمة تلقائياً إلى الأشخاص المناسبين عبر واتساب أو البريد. Free Windows app that forwards WhatsApp messages by rules.">
+<meta name="description" content="WhatsApp Manager — a free Windows app that forwards the WhatsApp messages that matter to the right people, by WhatsApp or email. حوّل رسائل واتساب المهمة تلقائياً.">
 <!-- Set to "owner/repo" if the site is served from a custom domain; on *.github.io it is detected automatically. -->
 <meta name="wam-repo" content="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,7 +66,7 @@ p { margin: 0; }
 .mono { font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
 
 /* language switching: elements marked data-l show only in their language */
-:root:not([lang="en"]) [data-l="en"], :root[lang="en"] [data-l="ar"] { display: none !important; }
+:root:not([lang="ar"]) [data-l="ar"], :root[lang="ar"] [data-l="en"] { display: none !important; }
 
 /* header */
 header.top {
@@ -345,7 +345,7 @@ footer .pub b { font-family: var(--font-display); }
       <button class="tab" role="tab" type="button" id="tab-email" data-shot="email-settings" data-only="ar" aria-selected="false"><span data-l="ar">البريد</span><span data-l="en">Email</span></button>
     </div>
     <figure class="shot" style="margin:0">
-      <img id="shot-img" src="screenshots/dashboard-ar.png" width="1920" height="1200" alt="WhatsApp Manager screenshot" loading="lazy">
+      <img id="shot-img" src="screenshots/dashboard-en.png" width="1920" height="1200" alt="WhatsApp Manager screenshot" loading="lazy">
     </figure>
     <p class="caption" id="shot-caption"></p>
   </section>
@@ -437,7 +437,7 @@ footer .pub b { font-family: var(--font-display); }
   };
   var current = 'dashboard';
 
-  function lang() { return root.getAttribute('lang') === 'en' ? 'en' : 'ar'; }
+  function lang() { return root.getAttribute('lang') === 'ar' ? 'ar' : 'en'; }
   function showShot(name) {
     current = name;
     var tab = document.querySelector('.tab[data-shot="' + name + '"]');
@@ -457,7 +457,7 @@ footer .pub b { font-family: var(--font-display); }
 
   var saved = null;
   try { saved = localStorage.getItem('wam-lang'); } catch (e) { saved = null; }
-  setLang(saved === 'en' ? 'en' : 'ar');
+  setLang(saved === 'ar' ? 'ar' : 'en');
   document.getElementById('lang-toggle').addEventListener('click', function () { setLang(lang() === 'ar' ? 'en' : 'ar'); });
   document.querySelectorAll('.tab').forEach(function (t) { t.addEventListener('click', function () { showShot(t.getAttribute('data-shot')); }); });
 

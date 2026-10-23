@@ -111,6 +111,11 @@ messages that match user-defined rules** to WhatsApp contacts or groups, or to e
 - vue-i18n: write `@` in messages as `{'@'}`.
 - Build: `./build.ps1 [-Version x.y.z] [-Installer] [-Msix] [-Channel github|store]` → `dist/`.
 
+## Reuse
+
+- `docs/STARTER_STACK.md` is the reusable blueprint (stack, architecture, icons, build, publishing,
+  gotchas) for new projects based on this one.
+
 ## Conventions
 
 - Never commit secrets, `*.db`, the GoWA binary, `statics/` or `storages/`.

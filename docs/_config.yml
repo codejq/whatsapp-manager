@@ -6,3 +6,6 @@ description: Forward the WhatsApp messages that matter, automatically.
 theme: jekyll-theme-primer
 exclude:
   - screenshots/README.md
+  # Developer blueprint, read on GitHub. Its code samples ({{ }} in Vue,
+  # Actions and Inno) break Liquid.
+  - STARTER_STACK.md

@@ -121,7 +121,19 @@ func AutostartEnabled() bool {
 	}
 	defer k.Close()
 	v, _, err := k.GetStringValue(AppName)
-	return err == nil && v != ""
+	if err != nil {
+		return false
+	}
+	want, err := autostartCommand()
+	return err == nil && strings.EqualFold(v, want)
+}
+
+func autostartCommand() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(`"%s" --minimized`, exe), nil
 }
 
 // SetAutostart adds or removes the HKCU Run entry (unpackaged builds only).
@@ -141,11 +153,11 @@ func SetAutostart(enable bool) error {
 		}
 		return err
 	}
-	exe, err := os.Executable()
+	cmd, err := autostartCommand()
 	if err != nil {
 		return err
 	}
-	return k.SetStringValue(AppName, fmt.Sprintf(`"%s" --minimized`, exe))
+	return k.SetStringValue(AppName, cmd)
 }
 
 // ---------- single instance ----------

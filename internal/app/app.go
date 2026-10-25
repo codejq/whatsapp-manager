@@ -136,7 +136,9 @@ func New(cfg Config) (*App, error) {
 	if err := a.loadRuntime(ctx); err != nil {
 		return nil, err
 	}
-	if firstRun && a.general.Autostart && !cfg.Platform.IsPackaged() {
+	// Re-check on every start: the Run entry can be removed or repointed
+	// (uninstall/reinstall, cleaners, other apps) while the setting stays on.
+	if a.general.Autostart && !cfg.Platform.IsPackaged() && !cfg.Platform.AutostartEnabled() {
 		a.applyAutostart(true)
 	}
 	a.token = randomSecret(24)

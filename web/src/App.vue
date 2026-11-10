@@ -2,7 +2,7 @@
 import { computed, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { app, refreshState } from './state'
-import { get, put, post, hasToken } from './api'
+import { get, post, hasToken } from './api'
 import { toasts } from './util'
 import Icon from './components/Icon.vue'
 import SidebarAd from './components/SidebarAd.vue'
@@ -45,7 +45,7 @@ const statusInfo = computed(() => {
 })
 
 async function resume() {
-  await put('/api/settings', { ...app.general, paused: false })
+  await post('/api/pause', { paused: false })
   refreshState()
 }
 

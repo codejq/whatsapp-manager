@@ -82,7 +82,9 @@ func (d *desktop) onReady(openWindow bool) {
 				d.showWindow()
 			case <-d.mPause.ClickedCh:
 				if d.app != nil {
-					d.app.SetPaused(!d.mPause.Checked())
+					// Flip the app's real state, not the menu checkmark,
+					// which can be out of date.
+					d.app.SetPaused(!d.app.General().Paused, "tray")
 				}
 			case <-d.mAr.ClickedCh:
 				if d.app != nil {

@@ -439,9 +439,14 @@ func (a *App) notifyTray() {
 	a.cfg.OnTray(TrayState{WA: st.WA, Phase: st.Phase, Paused: g.Paused, Lang: g.Language})
 }
 
-// SetPaused toggles all rules (tray menu).
-func (a *App) SetPaused(p bool) {
+// SetPaused pauses or resumes all rules. source ("tray", "ui") is logged so
+// an unexpected pause can be traced.
+func (a *App) SetPaused(p bool, source string) {
 	g := a.General()
+	if g.Paused == p {
+		return
+	}
+	a.Log.Info("rules paused changed", "paused", p, "source", source)
 	g.Paused = p
 	_, _ = a.SaveGeneral(context.Background(), g)
 }

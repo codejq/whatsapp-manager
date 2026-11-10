@@ -45,6 +45,16 @@ async function saveGeneral(patch) {
   }
 }
 
+async function setPaused(paused) {
+  try {
+    await post('/api/pause', { paused })
+    await refreshState()
+    notify(t('common.saved'))
+  } catch (e) {
+    notify(errText(e.key), 'error')
+  }
+}
+
 const importInput = ref(null)
 async function doImport(ev) {
   const f = ev.target.files[0]
@@ -114,7 +124,7 @@ async function checkUpdate() {
             </div>
           </div>
           <div class="flex items-start gap-3">
-            <Toggle :model-value="g.paused" :label="$t('settings.pause')" @update:model-value="saveGeneral({ paused: $event })" />
+            <Toggle :model-value="app.general.paused" :label="$t('settings.pause')" @update:model-value="setPaused" />
             <div>
               <div class="font-semibold">{{ $t('settings.pause') }}</div>
               <div class="text-sm text-slate-500">{{ $t('settings.pause_text') }}</div>

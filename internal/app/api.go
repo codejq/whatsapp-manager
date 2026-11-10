@@ -143,6 +143,7 @@ func (a *App) registerAPI(mux *http.ServeMux) {
 
 	mux.HandleFunc("GET /api/settings", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, 200, a.General()) })
 	mux.HandleFunc("PUT /api/settings", a.apiSaveSettings)
+	mux.HandleFunc("POST /api/pause", a.apiPause)
 
 	mux.HandleFunc("GET /api/smtp", a.apiSMTP)
 	mux.HandleFunc("PUT /api/smtp", a.apiSaveSMTP)
@@ -576,17 +577,33 @@ func (a *App) apiCancel(w http.ResponseWriter, r *http.Request) {
 // ---------- settings ----------
 
 func (a *App) apiSaveSettings(w http.ResponseWriter, r *http.Request) {
-	g := a.General()
+	cur := a.General()
+	g := cur
 	if err := readJSON(r, &g); err != nil {
 		writeErr(w, 400, "errors.bad_request", "")
 		return
 	}
+	// Pausing has its own endpoint: a stale copy of the settings in the UI
+	// must never pause or resume the rules as a side effect of another save.
+	g.Paused = cur.Paused
 	g, err := a.SaveGeneral(r.Context(), g)
 	if err != nil {
 		a.fail(w, 500, err)
 		return
 	}
 	writeJSON(w, 200, g)
+}
+
+func (a *App) apiPause(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Paused bool `json:"paused"`
+	}
+	if err := readJSON(r, &in); err != nil {
+		writeErr(w, 400, "errors.bad_request", "")
+		return
+	}
+	a.SetPaused(in.Paused, "ui")
+	writeJSON(w, 200, a.General())
 }
 
 func (a *App) apiSMTP(w http.ResponseWriter, r *http.Request) {

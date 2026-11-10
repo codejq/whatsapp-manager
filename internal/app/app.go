@@ -345,7 +345,8 @@ func (a *App) startServer(ctx context.Context) error {
 	mux.Handle("/hook", webhook.Handler(a.Store, func() string { return whSecret }, func() { a.Engine.Notify() }, a.Log.With("component", "webhook")))
 	mux.HandleFunc("/ipc/show", a.handleIPCShow)
 	a.registerAPI(mux)
-	a.server = &http.Server{Handler: a.guard(mux), ReadHeaderTimeout: 10 * time.Second}
+	// IdleTimeout: never hold idle keep-alive connections forever (see /hook).
+	a.server = &http.Server{Handler: a.guard(mux), ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 2 * time.Minute}
 	go func() {
 		if err := a.server.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			a.Log.Error("http server stopped", "err", err)

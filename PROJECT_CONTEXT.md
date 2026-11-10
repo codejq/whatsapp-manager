@@ -48,6 +48,9 @@ messages that match user-defined rules** to WhatsApp contacts or groups, or to e
   senderKeyDistributionMessage"), then the real message with the same ID. The receiver skips events
   without content (`webhook.HasContent`); otherwise the inbox dedup key would drop the real message.
 - **GoWA retries a failed webhook up to 5 times** (1/2/4/8 s backoff), so duplicates are expected.
+- **GoWA builds a new `http.Transport` per webhook and never closes it.** `/hook` must answer with
+  `Connection: close` (and the server keeps an `IdleTimeout`), or every message leaks a loopback socket and
+  Windows runs out of ports after days (`bind: … lacked sufficient buffer space`; UI shows "can't reach page").
 - Group JIDs end in `@g.us`. Users use `@s.whatsapp.net` or `@lid` (LID migration: match both `from` and `from_lid`).
 - Device-scoped REST calls accept the `X-Device-Id` header. With a single device, it is the default.
 - `GET /app/login` returns `results.qr_link` (PNG URL) and `qr_duration`. `POST /message/{id}/forward {phone}`

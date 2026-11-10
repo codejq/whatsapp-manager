@@ -2,8 +2,44 @@ package webhook
 
 import (
 	"encoding/json"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 )
+
+// GoWA sends each webhook with a new, never-closed http.Transport. The server
+// must close every connection itself, or one socket leaks per message.
+func TestHandlerClosesConnections(t *testing.T) {
+	var closed atomic.Int32
+	srv := httptest.NewUnstartedServer(Handler(nil, func() string { return "" }, func() {}, nil))
+	srv.Config.ConnState = func(_ net.Conn, s http.ConnState) {
+		if s == http.StateClosed {
+			closed.Add(1)
+		}
+	}
+	srv.Start()
+	defer srv.Close()
+
+	const n = 5
+	for i := 0; i < n; i++ {
+		cl := &http.Client{Transport: &http.Transport{}} // like GoWA: one per webhook
+		resp, err := cl.Get(srv.URL)                     // GET: answered without touching the store
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for closed.Load() < n && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if got := closed.Load(); got != n {
+		t.Fatalf("closed %d of %d connections; the rest leak", got, n)
+	}
+}
 
 func TestHasContent(t *testing.T) {
 	cases := map[string]bool{

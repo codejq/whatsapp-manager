@@ -22,6 +22,11 @@ const maxBody = 10 << 20
 // Handler returns the /hook handler.
 func Handler(st *store.Store, secret func() string, notify func(), log *slog.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// GoWA builds a new http.Transport for every webhook and never closes
+		// it, so a kept-alive connection would stay open forever on both ends.
+		// One leaked loopback socket per message exhausts Windows' ephemeral
+		// ports after a few days. Close the connection after every reply.
+		w.Header().Set("Connection", "close")
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
